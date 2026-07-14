@@ -20,6 +20,7 @@
   <script src="api.js"></script>
   <script>
     let ordersState = [];
+    let pendingRemovals = new Set(); // orderIds being marked complete but not yet confirmed
 
     const STATUS_LABEL = {
       received: 'Received',
@@ -53,7 +54,9 @@
     async function refresh() {
       try {
         const data = await fetchOrders('');
-        ordersState = data.orders;
+        // Don't let a background refresh bring back an order we just
+        // marked as picked up, before that change has saved to the Sheet.
+        ordersState = data.orders.filter(o => !pendingRemovals.has(o.orderId));
         render();
       } catch (err) {
         console.error('Refresh failed', err);
@@ -66,14 +69,15 @@
       const row = e.target.closest('.pickup-row');
       if (!row || row.dataset.status !== 'ready') return;
       const orderId = row.dataset.id;
-
-      row.classList.add('removing');
+      pendingRemovals.add(orderId);
       ordersState = ordersState.filter(o => o.orderId !== orderId);
-      setTimeout(render, 150);
+      render();
 
       try {
         await updateOrderStatus(orderId, 'completed');
+        pendingRemovals.delete(orderId); // confirmed — safe for refreshes now
       } catch (err) {
+        pendingRemovals.delete(orderId);
         refresh(); // bring it back if the update failed
       }
     });

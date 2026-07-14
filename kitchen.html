@@ -31,6 +31,7 @@
   <script src="api.js"></script>
   <script>
     let ordersState = [];
+    let pendingUpdates = {}; // orderId -> status we've optimistically set but not yet confirmed
     let knownOrderIds = new Set();
     let firstLoad = true;
 
@@ -114,6 +115,12 @@
         firstLoad = false;
 
         ordersState = data.orders;
+        // A background refresh might land while a status change we
+        // just made hasn't been saved to the Sheet yet — keep showing
+        // our version for those orders until the change is confirmed.
+        ordersState.forEach(o => {
+          if (pendingUpdates[o.orderId]) o.status = pendingUpdates[o.orderId];
+        });
         render();
       } catch (err) {
         console.error('Refresh failed', err);
@@ -131,12 +138,15 @@
       if (!order) return;
 
       const previousStatus = order.status;
+      pendingUpdates[orderId] = nextStatus;
       order.status = nextStatus; // optimistic — updates instantly
       render();
 
       try {
         await updateOrderStatus(orderId, nextStatus);
+        delete pendingUpdates[orderId]; // confirmed — safe for refreshes to take over again
       } catch (err) {
+        delete pendingUpdates[orderId];
         order.status = previousStatus; // revert on failure
         render();
         alert('Could not update that order — please try again.');

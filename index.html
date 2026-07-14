@@ -15,16 +15,24 @@
     <div class="subtitle" id="stationLabel">Station 1</div>
   </div>
 
-  <div class="menu-wrap">
+  <!-- Welcome / name-capture screen, shown first -->
+  <div class="welcome-wrap" id="welcomeScreen">
+    <div class="welcome-card">
+      <h1>Welcome!</h1>
+      <div class="tagline">Enter your name to start your order</div>
+      <label for="customerNameWelcome">Your name</label>
+      <input type="text" id="customerNameWelcome" placeholder="e.g. Mina" maxlength="30" autocomplete="off">
+      <button class="continue-btn" id="continueBtn" disabled>Continue to Menu</button>
+    </div>
+  </div>
+
+  <!-- Ordering screen, hidden until they continue -->
+  <div class="menu-wrap" id="orderScreen" style="display:none;">
     <div class="menu-scroll" id="menuScroll"></div>
 
     <div class="cart-panel">
       <h2>Your Order</h2>
-
-      <div class="name-field">
-        <label for="customerName">Name for your order</label>
-        <input type="text" id="customerName" placeholder="e.g. Mina" maxlength="30" autocomplete="off">
-      </div>
+      <div class="ordering-for" id="orderingForLabel">Ordering for: —</div>
 
       <div class="cart-lines" id="cartLines">
         <div class="cart-empty">Tap items to add them</div>
@@ -90,7 +98,25 @@
     document.getElementById('stationLabel').textContent = 'Station ' + station;
 
     let cart = {}; // id -> qty
+    let customerName = '';
 
+    // ---- Welcome screen ----
+    const nameInput = document.getElementById('customerNameWelcome');
+    const continueBtn = document.getElementById('continueBtn');
+
+    nameInput.addEventListener('input', () => {
+      continueBtn.disabled = nameInput.value.trim().length === 0;
+    });
+    nameInput.focus();
+
+    continueBtn.addEventListener('click', () => {
+      customerName = nameInput.value.trim();
+      document.getElementById('orderingForLabel').textContent = 'Ordering for: ' + customerName;
+      document.getElementById('welcomeScreen').style.display = 'none';
+      document.getElementById('orderScreen').style.display = 'grid';
+    });
+
+    // ---- Menu ----
     function renderMenu() {
       const wrap = document.getElementById('menuScroll');
       const categories = [...new Set(MENU.map(m => m.category))];
@@ -171,12 +197,6 @@
     }
 
     document.getElementById('checkoutBtn').addEventListener('click', () => {
-      const name = document.getElementById('customerName').value.trim();
-      if (!name) {
-        alert('Please enter a name for the order first.');
-        document.getElementById('customerName').focus();
-        return;
-      }
       document.getElementById('payModal').style.display = 'flex';
     });
     document.getElementById('payCancel').addEventListener('click', hideAllModals);
@@ -193,13 +213,12 @@
       btn.disabled = true;
       btn.textContent = 'Sending order...';
       try {
-        const name = document.getElementById('customerName').value.trim();
         const result = await submitOrder({
           station, items: currentItems(), total: cartTotal(),
-          paymentMethod: 'cash', customerName: name,
+          paymentMethod: 'cash', customerName,
         });
         hideAllModals();
-        showConfirmation(result.orderId, name, 'cash');
+        showConfirmation(result.orderId);
       } catch (err) {
         alert('Something went wrong sending your order. Please tell a volunteer.\n' + err.message);
       } finally {
@@ -211,19 +230,16 @@
     // ---- Card flow: submit immediately, then poll until the terminal reports success ----
     let paymentPollTimer = null;
     let pendingOrderId = null;
-    let pendingName = null;
 
     document.getElementById('payCardBtn').addEventListener('click', async () => {
       document.getElementById('payModal').style.display = 'none';
       document.getElementById('paymentFailedBox').style.display = 'none';
       document.getElementById('paymentPendingModal').style.display = 'flex';
 
-      const name = document.getElementById('customerName').value.trim();
-      pendingName = name;
       try {
         const result = await submitOrder({
           station, items: currentItems(), total: cartTotal(),
-          paymentMethod: 'card', customerName: name,
+          paymentMethod: 'card', customerName,
         });
         pendingOrderId = result.orderId;
         pollPaymentStatus();
@@ -240,7 +256,7 @@
           const status = await checkPaymentStatus(pendingOrderId);
           if (status.status === 'received') {
             hideAllModals();
-            showConfirmation(pendingOrderId, pendingName, 'card');
+            showConfirmation(pendingOrderId);
           } else if (status.status === 'failed') {
             document.getElementById('paymentFailedBox').style.display = 'block';
           } else {
@@ -261,8 +277,8 @@
       hideAllModals();
     });
 
-    function showConfirmation(orderId, name, paymentMethod) {
-      document.getElementById('confirmOrderId').textContent = orderId + (name ? ' — ' + name : '');
+    function showConfirmation(orderId) {
+      document.getElementById('confirmOrderId').textContent = orderId + ' — ' + customerName;
       document.getElementById('confirmHeading').textContent = 'Order placed!';
       document.getElementById('confirmBody').textContent =
         "We'll call your name and number when it's ready.";
@@ -270,8 +286,14 @@
 
       setTimeout(() => {
         hideAllModals();
+        // Reset everything for the next customer, back to the welcome screen.
         cart = {};
-        document.getElementById('customerName').value = '';
+        customerName = '';
+        nameInput.value = '';
+        continueBtn.disabled = true;
+        document.getElementById('orderScreen').style.display = 'none';
+        document.getElementById('welcomeScreen').style.display = 'flex';
+        nameInput.focus();
         renderMenu();
         renderCart();
       }, CONFIRMATION_DISPLAY_MS);
