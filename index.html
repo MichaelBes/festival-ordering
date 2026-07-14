@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>St. George Festival — Order</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="chevron-strip"></div>
+  <div class="topbar">
+    <h1>St. George Egyptian Festival</h1>
+    <div class="subtitle" id="stationLabel">Station 1</div>
+  </div>
+
+  <div class="menu-wrap">
+    <div class="menu-scroll" id="menuScroll"></div>
+
+    <div class="cart-panel">
+      <h2>Your Order</h2>
+      <div class="cart-lines" id="cartLines">
+        <div class="cart-empty">Tap items to add them</div>
+      </div>
+      <div class="cart-total-row">
+        <span>Total</span>
+        <span id="cartTotal">$0</span>
+      </div>
+      <button class="checkout-btn" id="checkoutBtn" disabled>Checkout</button>
+    </div>
+  </div>
+
+  <!-- Payment method modal -->
+  <div class="modal-backdrop" id="payModal" style="display:none;">
+    <div class="modal">
+      <h2>How would you like to pay?</h2>
+      <div class="pay-options">
+        <button class="pay-btn" id="payCardBtn">💳<br>Card<br><span style="font-weight:400;font-size:0.85rem;">Pay on the terminal</span></button>
+        <button class="pay-btn" id="payCashBtn">💵<br>Cash<br><span style="font-weight:400;font-size:0.85rem;">Pay a volunteer</span></button>
+      </div>
+      <div class="cancel-link" id="payCancel">Cancel</div>
+    </div>
+  </div>
+
+  <!-- Confirmation modal -->
+  <div class="modal-backdrop" id="confirmModal" style="display:none;">
+    <div class="modal">
+      <h2 id="confirmHeading">Order placed!</h2>
+      <div class="order-number-big" id="confirmOrderId">S1-001</div>
+      <p id="confirmBody">We'll call your number when it's ready.</p>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script>
+    const station = getStation();
+    document.getElementById('stationLabel').textContent = 'Station ' + station;
+
+    let cart = {}; // id -> qty
+
+    function renderMenu() {
+      const wrap = document.getElementById('menuScroll');
+      const categories = [...new Set(MENU.map(m => m.category))];
+      wrap.innerHTML = categories.map(cat => `
+        <div class="category-label">${cat}</div>
+        <div class="item-grid">
+          ${MENU.filter(m => m.category === cat).map(item => `
+            <div class="item-card">
+              <div class="item-name">${item.name}</div>
+              <div class="item-price">$${item.price}</div>
+              <div class="item-controls">
+                <div class="stepper">
+                  <button data-action="dec" data-id="${item.id}">–</button>
+                  <span class="count" id="count-${item.id}">${cart[item.id] || 0}</span>
+                  <button data-action="inc" data-id="${item.id}">+</button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+
+    function renderCart() {
+      const lines = Object.entries(cart).filter(([id, qty]) => qty > 0);
+      const cartLinesEl = document.getElementById('cartLines');
+      const checkoutBtn = document.getElementById('checkoutBtn');
+
+      if (lines.length === 0) {
+        cartLinesEl.innerHTML = '<div class="cart-empty">Tap items to add them</div>';
+        checkoutBtn.disabled = true;
+      } else {
+        cartLinesEl.innerHTML = lines.map(([id, qty]) => {
+          const item = MENU.find(m => m.id === id);
+          return `<div class="cart-line">
+            <span><span class="qty">${qty}×</span>${item.name}</span>
+            <span>$${item.price * qty}</span>
+          </div>`;
+        }).join('');
+        checkoutBtn.disabled = false;
+      }
+
+      const total = lines.reduce((sum, [id, qty]) => {
+        const item = MENU.find(m => m.id === id);
+        return sum + item.price * qty;
+      }, 0);
+      document.getElementById('cartTotal').textContent = '$' + total;
+    }
+
+    document.getElementById('menuScroll').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const id = btn.dataset.id;
+      const cur = cart[id] || 0;
+      if (btn.dataset.action === 'inc') cart[id] = cur + 1;
+      if (btn.dataset.action === 'dec') cart[id] = Math.max(0, cur - 1);
+      document.getElementById('count-' + id).textContent = cart[id] || 0;
+      renderCart();
+    });
+
+    function cartTotal() {
+      return Object.entries(cart).filter(([id, qty]) => qty > 0)
+        .reduce((sum, [id, qty]) => sum + MENU.find(m => m.id === id).price * qty, 0);
+    }
+
+    document.getElementById('checkoutBtn').addEventListener('click', () => {
+      document.getElementById('payModal').style.display = 'flex';
+    });
+    document.getElementById('payCancel').addEventListener('click', () => {
+      document.getElementById('payModal').style.display = 'none';
+    });
+
+    async function placeOrder(paymentMethod) {
+      document.getElementById('payModal').style.display = 'none';
+      const items = Object.entries(cart).filter(([id, qty]) => qty > 0)
+        .map(([id, qty]) => {
+          const item = MENU.find(m => m.id === id);
+          return { id, name: item.name, qty, price: item.price };
+        });
+      const total = cartTotal();
+
+      try {
+        const result = await submitOrder({ station, items, total, paymentMethod });
+        showConfirmation(result.orderId, paymentMethod);
+      } catch (err) {
+        alert('Something went wrong sending your order. Please tell a volunteer.\n' + err.message);
+      }
+    }
+
+    document.getElementById('payCardBtn').addEventListener('click', () => placeOrder('card'));
+    document.getElementById('payCashBtn').addEventListener('click', () => placeOrder('cash'));
+
+    function showConfirmation(orderId, paymentMethod) {
+      document.getElementById('confirmOrderId').textContent = orderId;
+      document.getElementById('confirmHeading').textContent =
+        paymentMethod === 'card' ? 'Please complete payment on the terminal' : 'Order placed!';
+      document.getElementById('confirmBody').textContent =
+        paymentMethod === 'card'
+          ? "Follow the prompts on the card reader next to you."
+          : "Please pay a volunteer, then we'll call your number when it's ready.";
+      document.getElementById('confirmModal').style.display = 'flex';
+
+      setTimeout(() => {
+        document.getElementById('confirmModal').style.display = 'none';
+        cart = {};
+        renderMenu();
+        renderCart();
+      }, CONFIRMATION_DISPLAY_MS);
+    }
+
+    renderMenu();
+    renderCart();
+  </script>
+</body>
+</html>

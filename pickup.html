@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Order Pickup — St. George Festival</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="pickup">
+  <div class="chevron-strip"></div>
+  <div class="topbar">
+    <h1>Order Pickup</h1>
+    <div class="subtitle">Tap a ready order once it's handed to the guest</div>
+  </div>
+
+  <div class="board">
+    <div class="columns">
+      <div>
+        <div class="col-heading">Cooking <span class="count" id="cookingCount">0</span></div>
+        <div id="cookingList"></div>
+      </div>
+      <div>
+        <div class="col-heading">Ready for Pickup <span class="count" id="readyCount">0</span></div>
+        <div id="readyList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script>
+    function renderCooking(orders) {
+      const el = document.getElementById('cookingList');
+      if (orders.length === 0) {
+        el.innerHTML = '<div class="empty-state">Nothing cooking right now</div>';
+        return;
+      }
+      el.innerHTML = orders.map(o => `
+        <div class="order-card status-in_progress">
+          <div class="order-card-top"><span class="order-id">${o.orderId}</span></div>
+        </div>
+      `).join('');
+    }
+
+    function renderReady(orders) {
+      const el = document.getElementById('readyList');
+      if (orders.length === 0) {
+        el.innerHTML = '<div class="empty-state">No orders ready yet</div>';
+        return;
+      }
+      el.innerHTML = orders.map(o => `
+        <div class="order-card status-ready" data-id="${o.orderId}">
+          <div class="order-card-top"><span class="order-id">${o.orderId}</span></div>
+        </div>
+      `).join('');
+    }
+
+    async function refresh() {
+      try {
+        const data = await fetchOrders('');
+        const cooking = data.orders.filter(o => o.status === 'in_progress');
+        const ready = data.orders.filter(o => o.status === 'ready');
+        document.getElementById('cookingCount').textContent = cooking.length;
+        document.getElementById('readyCount').textContent = ready.length;
+        renderCooking(cooking);
+        renderReady(ready);
+      } catch (err) {
+        console.error('Refresh failed', err);
+      }
+    }
+
+    document.getElementById('readyList').addEventListener('click', async (e) => {
+      const card = e.target.closest('.order-card');
+      if (!card) return;
+      card.style.opacity = '0.4';
+      try {
+        await updateOrderStatus(card.dataset.id, 'completed');
+        refresh();
+      } catch (err) {
+        card.style.opacity = '1';
+      }
+    });
+
+    refresh();
+    setInterval(refresh, POLL_INTERVAL_MS);
+  </script>
+</body>
+</html>

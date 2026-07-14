@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Kitchen — St. George Festival</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="kitchen">
+  <div class="chevron-strip"></div>
+  <div class="topbar">
+    <h1>Kitchen</h1>
+    <div class="subtitle" id="clock"></div>
+  </div>
+
+  <div class="board">
+    <div class="columns">
+      <div>
+        <div class="col-heading">Received <span class="count" id="receivedCount">0</span></div>
+        <div id="receivedList"></div>
+      </div>
+      <div>
+        <div class="col-heading">In Progress <span class="count" id="progressCount">0</span></div>
+        <div id="progressList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script>
+    let knownOrderIds = new Set();
+    let firstLoad = true;
+
+    // Simple synthesized beep — no audio file needed.
+    // iOS requires a user tap before any sound can play, so the
+    // first tap anywhere on the kitchen screen "unlocks" audio.
+    let audioCtx = null;
+    document.body.addEventListener('click', () => {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }, { once: true });
+
+    function playChime() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.value = 880;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.4);
+    }
+
+    function timeAgo(ts) {
+      const mins = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+      if (mins < 1) return 'just now';
+      return mins + ' min ago';
+    }
+
+    function renderColumn(listEl, orders, actionType) {
+      if (orders.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">Nothing here</div>';
+        return;
+      }
+      listEl.innerHTML = orders.map(o => `
+        <div class="order-card status-${o.status}">
+          <div class="order-card-top">
+            <span class="order-id">${o.orderId}${o.paymentMethod === 'cash' ? '<span class="order-tag">CASH</span>' : ''}</span>
+            <span class="order-elapsed">${timeAgo(o.timestamp)}</span>
+          </div>
+          <div class="order-items">${o.itemsSummary}</div>
+          <div class="order-actions">
+            ${actionType === 'start'
+              ? `<button class="btn-start" data-id="${o.orderId}" data-next="in_progress">Start Cooking</button>`
+              : `<button class="btn-ready" data-id="${o.orderId}" data-next="ready">Mark Ready</button>`
+            }
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function refresh() {
+      try {
+        const data = await fetchOrders(''); // all active orders
+        const received = data.orders.filter(o => o.status === 'received');
+        const inProgress = data.orders.filter(o => o.status === 'in_progress');
+
+        // chime on genuinely new orders (skip on first load)
+        const currentIds = new Set(data.orders.map(o => o.orderId));
+        if (!firstLoad) {
+          const isNew = [...currentIds].some(id => !knownOrderIds.has(id));
+          if (isNew) playChime();
+        }
+        knownOrderIds = currentIds;
+        firstLoad = false;
+
+        document.getElementById('receivedCount').textContent = received.length;
+        document.getElementById('progressCount').textContent = inProgress.length;
+        renderColumn(document.getElementById('receivedList'), received, 'start');
+        renderColumn(document.getElementById('progressList'), inProgress, 'ready');
+      } catch (err) {
+        console.error('Refresh failed', err);
+      }
+    }
+
+    document.querySelector('.board').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-id]');
+      if (!btn) return;
+      btn.disabled = true;
+      btn.textContent = '...';
+      try {
+        await updateOrderStatus(btn.dataset.id, btn.dataset.next);
+        refresh();
+      } catch (err) {
+        alert('Could not update order. Try again.');
+        btn.disabled = false;
+      }
+    });
+
+    function updateClock() {
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    updateClock();
+    setInterval(updateClock, 30000);
+    refresh();
+    setInterval(refresh, POLL_INTERVAL_MS);
+  </script>
+</body>
+</html>
