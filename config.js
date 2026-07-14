@@ -24,9 +24,13 @@ const MENU = [
 // per-device by adding ?station=2 to the URL instead of editing this.
 const DEFAULT_STATION = "1";
 
-// How long (ms) the order-confirmation screen stays up before the
+// How long (ms) the final "order placed" screen stays up before the
 // ordering page resets itself for the next customer.
-const CONFIRMATION_DISPLAY_MS = 9000;
+const CONFIRMATION_DISPLAY_MS = 8000;
 
 // How often (ms) the kitchen and pickup screens re-check for updates.
-const POLL_INTERVAL_MS = 4000;
+const POLL_INTERVAL_MS = 3000;
+
+// How often (ms) the order page checks whether a card payment has
+// completed on the terminal, while showing the "pay on terminal" screen.
+const PAYMENT_POLL_INTERVAL_MS = 2000;

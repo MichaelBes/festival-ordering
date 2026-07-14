@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="chevron-strip"></div>
+  <div class="glow-bar"></div>
   <div class="topbar">
     <h1>St. George Egyptian Festival</h1>
     <div class="subtitle" id="stationLabel">Station 1</div>
@@ -20,6 +20,12 @@
 
     <div class="cart-panel">
       <h2>Your Order</h2>
+
+      <div class="name-field">
+        <label for="customerName">Name for your order</label>
+        <input type="text" id="customerName" placeholder="e.g. Mina" maxlength="30" autocomplete="off">
+      </div>
+
       <div class="cart-lines" id="cartLines">
         <div class="cart-empty">Tap items to add them</div>
       </div>
@@ -40,6 +46,31 @@
         <button class="pay-btn" id="payCashBtn">💵<br>Cash<br><span style="font-weight:400;font-size:0.85rem;">Pay a volunteer</span></button>
       </div>
       <div class="cancel-link" id="payCancel">Cancel</div>
+    </div>
+  </div>
+
+  <!-- Cash: volunteer must confirm before the order is sent -->
+  <div class="modal-backdrop" id="cashConfirmModal" style="display:none;">
+    <div class="modal">
+      <div class="flip-icon">🔄📱</div>
+      <h2>Turn the iPad to a volunteer</h2>
+      <p>A volunteer needs to confirm cash has been received before this order is sent to the kitchen.</p>
+      <button class="volunteer-confirm-btn" id="volunteerConfirmBtn">Confirm Cash Received</button>
+      <div class="cancel-link" id="cashCancel">Cancel</div>
+    </div>
+  </div>
+
+  <!-- Card: waiting on the terminal -->
+  <div class="modal-backdrop" id="paymentPendingModal" style="display:none;">
+    <div class="modal">
+      <h2>Pay on the Terminal</h2>
+      <div class="spinner"></div>
+      <p>Follow the prompts on the card reader next to you. This will update automatically once payment is complete.</p>
+      <div id="paymentFailedBox" style="display:none;">
+        <p style="color:var(--danger);font-weight:600;">Payment didn't go through.</p>
+        <button class="retry-btn" id="retryPaymentBtn">Try Again</button>
+        <div class="cancel-link" id="paymentCancelBtn">Cancel order</div>
+      </div>
     </div>
   </div>
 
@@ -125,46 +156,122 @@
         .reduce((sum, [id, qty]) => sum + MENU.find(m => m.id === id).price * qty, 0);
     }
 
-    document.getElementById('checkoutBtn').addEventListener('click', () => {
-      document.getElementById('payModal').style.display = 'flex';
-    });
-    document.getElementById('payCancel').addEventListener('click', () => {
-      document.getElementById('payModal').style.display = 'none';
-    });
-
-    async function placeOrder(paymentMethod) {
-      document.getElementById('payModal').style.display = 'none';
-      const items = Object.entries(cart).filter(([id, qty]) => qty > 0)
+    function currentItems() {
+      return Object.entries(cart).filter(([id, qty]) => qty > 0)
         .map(([id, qty]) => {
           const item = MENU.find(m => m.id === id);
           return { id, name: item.name, qty, price: item.price };
         });
-      const total = cartTotal();
-
-      try {
-        const result = await submitOrder({ station, items, total, paymentMethod });
-        showConfirmation(result.orderId, paymentMethod);
-      } catch (err) {
-        alert('Something went wrong sending your order. Please tell a volunteer.\n' + err.message);
-      }
     }
 
-    document.getElementById('payCardBtn').addEventListener('click', () => placeOrder('card'));
-    document.getElementById('payCashBtn').addEventListener('click', () => placeOrder('cash'));
+    function hideAllModals() {
+      ['payModal', 'cashConfirmModal', 'paymentPendingModal', 'confirmModal'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+      });
+    }
 
-    function showConfirmation(orderId, paymentMethod) {
-      document.getElementById('confirmOrderId').textContent = orderId;
-      document.getElementById('confirmHeading').textContent =
-        paymentMethod === 'card' ? 'Please complete payment on the terminal' : 'Order placed!';
+    document.getElementById('checkoutBtn').addEventListener('click', () => {
+      const name = document.getElementById('customerName').value.trim();
+      if (!name) {
+        alert('Please enter a name for the order first.');
+        document.getElementById('customerName').focus();
+        return;
+      }
+      document.getElementById('payModal').style.display = 'flex';
+    });
+    document.getElementById('payCancel').addEventListener('click', hideAllModals);
+    document.getElementById('cashCancel').addEventListener('click', hideAllModals);
+
+    // ---- Cash flow: requires a volunteer tap before it's sent ----
+    document.getElementById('payCashBtn').addEventListener('click', () => {
+      document.getElementById('payModal').style.display = 'none';
+      document.getElementById('cashConfirmModal').style.display = 'flex';
+    });
+
+    document.getElementById('volunteerConfirmBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('volunteerConfirmBtn');
+      btn.disabled = true;
+      btn.textContent = 'Sending order...';
+      try {
+        const name = document.getElementById('customerName').value.trim();
+        const result = await submitOrder({
+          station, items: currentItems(), total: cartTotal(),
+          paymentMethod: 'cash', customerName: name,
+        });
+        hideAllModals();
+        showConfirmation(result.orderId, name, 'cash');
+      } catch (err) {
+        alert('Something went wrong sending your order. Please tell a volunteer.\n' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirm Cash Received';
+      }
+    });
+
+    // ---- Card flow: submit immediately, then poll until the terminal reports success ----
+    let paymentPollTimer = null;
+    let pendingOrderId = null;
+    let pendingName = null;
+
+    document.getElementById('payCardBtn').addEventListener('click', async () => {
+      document.getElementById('payModal').style.display = 'none';
+      document.getElementById('paymentFailedBox').style.display = 'none';
+      document.getElementById('paymentPendingModal').style.display = 'flex';
+
+      const name = document.getElementById('customerName').value.trim();
+      pendingName = name;
+      try {
+        const result = await submitOrder({
+          station, items: currentItems(), total: cartTotal(),
+          paymentMethod: 'card', customerName: name,
+        });
+        pendingOrderId = result.orderId;
+        pollPaymentStatus();
+      } catch (err) {
+        alert('Something went wrong starting the order. Please tell a volunteer.\n' + err.message);
+        hideAllModals();
+      }
+    });
+
+    function pollPaymentStatus() {
+      clearTimeout(paymentPollTimer);
+      paymentPollTimer = setTimeout(async () => {
+        try {
+          const status = await checkPaymentStatus(pendingOrderId);
+          if (status.status === 'received') {
+            hideAllModals();
+            showConfirmation(pendingOrderId, pendingName, 'card');
+          } else if (status.status === 'failed') {
+            document.getElementById('paymentFailedBox').style.display = 'block';
+          } else {
+            pollPaymentStatus(); // still waiting
+          }
+        } catch (err) {
+          pollPaymentStatus(); // network hiccup — keep trying
+        }
+      }, PAYMENT_POLL_INTERVAL_MS);
+    }
+
+    document.getElementById('retryPaymentBtn').addEventListener('click', () => {
+      document.getElementById('paymentFailedBox').style.display = 'none';
+      pollPaymentStatus();
+    });
+    document.getElementById('paymentCancelBtn').addEventListener('click', () => {
+      clearTimeout(paymentPollTimer);
+      hideAllModals();
+    });
+
+    function showConfirmation(orderId, name, paymentMethod) {
+      document.getElementById('confirmOrderId').textContent = orderId + (name ? ' — ' + name : '');
+      document.getElementById('confirmHeading').textContent = 'Order placed!';
       document.getElementById('confirmBody').textContent =
-        paymentMethod === 'card'
-          ? "Follow the prompts on the card reader next to you."
-          : "Please pay a volunteer, then we'll call your number when it's ready.";
+        "We'll call your name and number when it's ready.";
       document.getElementById('confirmModal').style.display = 'flex';
 
       setTimeout(() => {
-        document.getElementById('confirmModal').style.display = 'none';
+        hideAllModals();
         cart = {};
+        document.getElementById('customerName').value = '';
         renderMenu();
         renderCart();
       }, CONFIRMATION_DISPLAY_MS);

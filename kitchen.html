@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body class="kitchen">
-  <div class="chevron-strip"></div>
+  <div class="glow-bar"></div>
   <div class="topbar">
     <h1>Kitchen</h1>
     <div class="subtitle" id="clock"></div>
@@ -30,6 +30,7 @@
   <script src="config.js"></script>
   <script src="api.js"></script>
   <script>
+    let ordersState = [];
     let knownOrderIds = new Set();
     let firstLoad = true;
 
@@ -60,18 +61,21 @@
       return mins + ' min ago';
     }
 
-    function renderColumn(listEl, orders, actionType) {
-      if (orders.length === 0) {
-        listEl.innerHTML = '<div class="empty-state">Nothing here</div>';
-        return;
-      }
-      listEl.innerHTML = orders.map(o => `
-        <div class="order-card status-${o.status}">
+    function orderCardHtml(o, actionType) {
+      const items = Array.isArray(o.items) ? o.items : [];
+      return `
+        <div class="order-card status-${o.status}" data-id="${o.orderId}">
           <div class="order-card-top">
-            <span class="order-id">${o.orderId}${o.paymentMethod === 'cash' ? '<span class="order-tag">CASH</span>' : ''}</span>
+            <span>
+              <span class="order-id">${o.orderId}</span>
+              ${o.customerName ? `<span class="order-name">${o.customerName}</span>` : ''}
+              ${o.paymentMethod === 'cash' ? '<span class="order-tag">CASH</span>' : ''}
+            </span>
             <span class="order-elapsed">${timeAgo(o.timestamp)}</span>
           </div>
-          <div class="order-items">${o.itemsSummary}</div>
+          <ul class="order-items-list">
+            ${items.map(i => `<li>${i.qty}× ${i.name}</li>`).join('')}
+          </ul>
           <div class="order-actions">
             ${actionType === 'start'
               ? `<button class="btn-start" data-id="${o.orderId}" data-next="in_progress">Start Cooking</button>`
@@ -79,16 +83,28 @@
             }
           </div>
         </div>
-      `).join('');
+      `;
+    }
+
+    function render() {
+      const received = ordersState.filter(o => o.status === 'received');
+      const inProgress = ordersState.filter(o => o.status === 'in_progress');
+
+      document.getElementById('receivedCount').textContent = received.length;
+      document.getElementById('progressCount').textContent = inProgress.length;
+
+      document.getElementById('receivedList').innerHTML = received.length
+        ? received.map(o => orderCardHtml(o, 'start')).join('')
+        : '<div class="empty-state">Nothing here</div>';
+
+      document.getElementById('progressList').innerHTML = inProgress.length
+        ? inProgress.map(o => orderCardHtml(o, 'ready')).join('')
+        : '<div class="empty-state">Nothing here</div>';
     }
 
     async function refresh() {
       try {
-        const data = await fetchOrders(''); // all active orders
-        const received = data.orders.filter(o => o.status === 'received');
-        const inProgress = data.orders.filter(o => o.status === 'in_progress');
-
-        // chime on genuinely new orders (skip on first load)
+        const data = await fetchOrders('');
         const currentIds = new Set(data.orders.map(o => o.orderId));
         if (!firstLoad) {
           const isNew = [...currentIds].some(id => !knownOrderIds.has(id));
@@ -97,26 +113,33 @@
         knownOrderIds = currentIds;
         firstLoad = false;
 
-        document.getElementById('receivedCount').textContent = received.length;
-        document.getElementById('progressCount').textContent = inProgress.length;
-        renderColumn(document.getElementById('receivedList'), received, 'start');
-        renderColumn(document.getElementById('progressList'), inProgress, 'ready');
+        ordersState = data.orders;
+        render();
       } catch (err) {
         console.error('Refresh failed', err);
       }
     }
 
+    // Optimistic update: move the card instantly, sync with the
+    // server in the background, and only revert + warn if it fails.
     document.querySelector('.board').addEventListener('click', async (e) => {
       const btn = e.target.closest('button[data-id]');
       if (!btn) return;
-      btn.disabled = true;
-      btn.textContent = '...';
+      const orderId = btn.dataset.id;
+      const nextStatus = btn.dataset.next;
+      const order = ordersState.find(o => o.orderId === orderId);
+      if (!order) return;
+
+      const previousStatus = order.status;
+      order.status = nextStatus; // optimistic — updates instantly
+      render();
+
       try {
-        await updateOrderStatus(btn.dataset.id, btn.dataset.next);
-        refresh();
+        await updateOrderStatus(orderId, nextStatus);
       } catch (err) {
-        alert('Could not update order. Try again.');
-        btn.disabled = false;
+        order.status = previousStatus; // revert on failure
+        render();
+        alert('Could not update that order — please try again.');
       }
     });
 

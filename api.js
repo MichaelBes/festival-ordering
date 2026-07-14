@@ -48,3 +48,9 @@ async function fetchOrders(statusFilter) {
 async function updateOrderStatus(orderId, status) {
   return postToBackend({ action: "updateStatus", orderId, status });
 }
+
+// Used while a card order is on the "pay on terminal" screen — checks
+// whether the Square Terminal checkout has completed yet.
+async function checkPaymentStatus(orderId) {
+  return getFromBackend({ action: "checkPayment", orderId });
+}
