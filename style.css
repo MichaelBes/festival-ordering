@@ -20,7 +20,7 @@
   --danger: #C1350F;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; touch-action: manipulation; }
 
 html, body {
   margin: 0;
