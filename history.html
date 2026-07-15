@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Order History — St. George Festival</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="glow-bar"></div>
+  <div class="topbar">
+    <h1>Order History</h1>
+    <a class="history-link" href="pickup.html">← Back to Pickup</a>
+  </div>
+
+  <div class="history-search-bar">
+    <input type="text" id="searchInput" placeholder="Search by name or order number (e.g. Mina or S1-014)" autocomplete="off">
+  </div>
+
+  <div class="history-list" id="historyList">
+    <div class="empty-state">Loading orders...</div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script>
+    let allOrders = [];
+
+    const STATUS_LABEL = {
+      received: 'Received', in_progress: 'In Progress',
+      ready: 'Ready', completed: 'Picked Up',
+      awaiting_payment: 'Awaiting Payment', failed: 'Payment Failed',
+    };
+
+    function cardHtml(o) {
+      const items = Array.isArray(o.items) ? o.items : [];
+      const time = new Date(o.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      return `
+        <div class="history-card">
+          <div class="history-card-top">
+            <span>
+              <span class="order-name">${o.customerName || '—'}</span>
+              <span class="order-id">${o.orderId}</span>
+            </span>
+            <span class="status-pill ${o.status}">${STATUS_LABEL[o.status] || o.status}</span>
+          </div>
+          <ul class="order-items-list">
+            ${items.map(i => `<li>${i.qty}× ${i.name}</li>`).join('')}
+          </ul>
+          <div class="history-meta">${time} · $${o.total} · ${o.paymentMethod === 'cash' ? 'Cash' : 'Card'} · Station ${o.station}</div>
+        </div>
+      `;
+    }
+
+    function render() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      const listEl = document.getElementById('historyList');
+
+      const filtered = query
+        ? allOrders.filter(o =>
+            (o.customerName || '').toLowerCase().includes(query) ||
+            o.orderId.toLowerCase().includes(query))
+        : allOrders;
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div class="empty-state">${query ? 'No matching orders' : 'No orders yet'}</div>`;
+        return;
+      }
+      listEl.innerHTML = filtered.map(cardHtml).join('');
+    }
+
+    async function load() {
+      try {
+        const data = await fetchHistory();
+        allOrders = data.orders; // already newest-first from the backend
+        render();
+      } catch (err) {
+        document.getElementById('historyList').innerHTML = '<div class="empty-state">Couldn\'t load orders. Check your connection.</div>';
+      }
+    }
+
+    document.getElementById('searchInput').addEventListener('input', render);
+
+    load();
+  </script>
+</body>
+</html>

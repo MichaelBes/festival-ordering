@@ -4,7 +4,7 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // Your menu. id must be unique. price is in dollars.
 const MENU = [
@@ -34,3 +34,7 @@ const POLL_INTERVAL_MS = 3000;
 // How often (ms) the order page checks whether a card payment has
 // completed on the terminal, while showing the "pay on terminal" screen.
 const PAYMENT_POLL_INTERVAL_MS = 2000;
+
+// 4-digit code a volunteer must enter to confirm a cash order before
+// it's sent to the kitchen. Change this to whatever you'd like.
+const VOLUNTEER_PASSCODE = "1111";

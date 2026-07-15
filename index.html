@@ -61,8 +61,20 @@
     <div class="modal">
       <div class="flip-icon">🔄📱</div>
       <h2>Turn the iPad to a volunteer</h2>
-      <p>A volunteer needs to confirm cash has been received before this order is sent to the kitchen.</p>
-      <button class="volunteer-confirm-btn" id="volunteerConfirmBtn">Confirm Cash Received</button>
+      <div class="cash-summary">
+        <div class="cash-summary-row"><span>Order for</span><span id="cashConfirmName">—</span></div>
+        <div class="cash-summary-row total"><span>Collect</span><span id="cashConfirmTotal">$0</span></div>
+      </div>
+      <p>Volunteer: enter the passcode once cash is received.</p>
+      <div class="passcode-dots" id="passcodeDots">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+      <div class="keypad" id="cashKeypad">
+        <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button>
+        <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button>
+        <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button>
+        <button data-key="clear" class="keypad-back">Clear</button><button data-key="0">0</button><button data-key="back" class="keypad-back">⌫</button>
+      </div>
       <div class="cancel-link" id="cashCancel">Cancel</div>
     </div>
   </div>
@@ -85,7 +97,8 @@
   <div class="modal-backdrop" id="confirmModal" style="display:none;">
     <div class="modal">
       <h2 id="confirmHeading">Order placed!</h2>
-      <div class="order-number-big" id="confirmOrderId">S1-001</div>
+      <div class="confirm-name-big" id="confirmName">Mina</div>
+      <div class="confirm-order-id" id="confirmOrderId">Order #S1-001</div>
       <p id="confirmBody">We'll call your number when it's ready.</p>
     </div>
   </div>
@@ -201,30 +214,70 @@
     document.getElementById('payCancel').addEventListener('click', hideAllModals);
     document.getElementById('cashCancel').addEventListener('click', hideAllModals);
 
-    // ---- Cash flow: requires a volunteer tap before it's sent ----
+    // ---- Cash flow: shows total + requires volunteer passcode before sending ----
+    let enteredPasscode = '';
+
+    function renderPasscodeDots(errorState) {
+      const dots = document.querySelectorAll('#passcodeDots .dot');
+      dots.forEach((dot, i) => dot.classList.toggle('filled', i < enteredPasscode.length));
+      document.getElementById('passcodeDots').classList.toggle('error', !!errorState);
+    }
+
     document.getElementById('payCashBtn').addEventListener('click', () => {
       document.getElementById('payModal').style.display = 'none';
+      document.getElementById('cashConfirmName').textContent = customerName;
+      document.getElementById('cashConfirmTotal').textContent = '$' + cartTotal();
+      enteredPasscode = '';
+      renderPasscodeDots(false);
       document.getElementById('cashConfirmModal').style.display = 'flex';
     });
 
-    document.getElementById('volunteerConfirmBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('volunteerConfirmBtn');
-      btn.disabled = true;
-      btn.textContent = 'Sending order...';
+    document.getElementById('cashKeypad').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-key]');
+      if (!btn) return;
+      const key = btn.dataset.key;
+
+      if (key === 'clear') {
+        enteredPasscode = '';
+        renderPasscodeDots(false);
+        return;
+      }
+      if (key === 'back') {
+        enteredPasscode = enteredPasscode.slice(0, -1);
+        renderPasscodeDots(false);
+        return;
+      }
+      if (enteredPasscode.length >= 4) return;
+
+      enteredPasscode += key;
+      renderPasscodeDots(false);
+
+      if (enteredPasscode.length === 4) {
+        if (enteredPasscode === VOLUNTEER_PASSCODE) {
+          await sendCashOrder();
+        } else {
+          renderPasscodeDots(true);
+          setTimeout(() => {
+            enteredPasscode = '';
+            renderPasscodeDots(false);
+          }, 500);
+        }
+      }
+    });
+
+    async function sendCashOrder() {
+      document.getElementById('cashConfirmModal').style.display = 'none';
       try {
         const result = await submitOrder({
           station, items: currentItems(), total: cartTotal(),
           paymentMethod: 'cash', customerName,
         });
-        hideAllModals();
         showConfirmation(result.orderId);
       } catch (err) {
         alert('Something went wrong sending your order. Please tell a volunteer.\n' + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Confirm Cash Received';
+        document.getElementById('cashConfirmModal').style.display = 'flex';
       }
-    });
+    }
 
     // ---- Card flow: submit immediately, then poll until the terminal reports success ----
     let paymentPollTimer = null;
@@ -277,7 +330,8 @@
     });
 
     function showConfirmation(orderId) {
-      document.getElementById('confirmOrderId').textContent = orderId + ' — ' + customerName;
+      document.getElementById('confirmName').textContent = customerName;
+      document.getElementById('confirmOrderId').textContent = 'Order #' + orderId;
       document.getElementById('confirmHeading').textContent = 'Order placed!';
       document.getElementById('confirmBody').textContent =
         "We'll call your name and number when it's ready.";

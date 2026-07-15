@@ -11,7 +11,7 @@
   <div class="glow-bar"></div>
   <div class="topbar">
     <h1>Order Pickup</h1>
-    <div class="subtitle">Look for your name or order number · tap once handed to a guest</div>
+    <a class="history-link" href="history.html">Previous Orders →</a>
   </div>
 
   <div class="pickup-list" id="pickupList"></div>
@@ -32,8 +32,8 @@
       return `
         <div class="pickup-row" data-id="${o.orderId}" data-status="${o.status}">
           <div class="pickup-row-left">
+            <span class="pickup-name">${o.customerName || '—'}</span>
             <span class="pickup-order-id">${o.orderId}</span>
-            <span class="pickup-name">${o.customerName || ''}</span>
           </div>
           <span class="status-pill ${o.status}">${STATUS_LABEL[o.status] || o.status}</span>
         </div>

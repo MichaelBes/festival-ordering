@@ -54,3 +54,8 @@ async function updateOrderStatus(orderId, status) {
 async function checkPaymentStatus(orderId) {
   return getFromBackend({ action: "checkPayment", orderId });
 }
+
+// Returns every order (any status, any day) for the history/lookup page.
+async function fetchHistory() {
+  return getFromBackend({ action: "getHistory" });
+}

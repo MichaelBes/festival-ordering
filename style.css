@@ -233,9 +233,13 @@ h1, h2, h3, .display {
 .pay-btn:active { border-color: var(--gold-bright); background: #F0DFB8; }
 .cancel-link { margin-top: 18px; color: var(--cream-dim); font-size: 0.9rem; }
 
-.order-number-big {
-  font-family: 'Anton', sans-serif; font-size: 3rem; color: var(--maroon);
-  margin: 14px 0;
+.confirm-name-big {
+  font-family: 'Anton', sans-serif; font-size: 2.6rem; color: var(--maroon);
+  margin: 14px 0 4px;
+}
+.confirm-order-id {
+  font-family: 'Barlow Semi Condensed'; font-weight: 700; font-size: 1.1rem;
+  color: var(--cream-dim); letter-spacing: 0.03em; margin-bottom: 6px;
 }
 
 .volunteer-confirm-btn {
@@ -259,6 +263,65 @@ h1, h2, h3, .display {
   padding: 14px 22px; border-radius: 10px; font-weight: 700;
   font-family: 'Barlow'; margin-top: 16px;
 }
+
+/* Cash confirmation: total + passcode keypad */
+.cash-summary {
+  background: var(--bg-panel-2); border-radius: 12px; padding: 14px 18px;
+  margin: 16px 0; text-align: left;
+}
+.cash-summary-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 0; font-size: 1.05rem;
+}
+.cash-summary-row.total {
+  font-family: 'Anton', sans-serif; font-size: 1.5rem; color: var(--maroon);
+  border-top: 1px solid var(--line); margin-top: 6px; padding-top: 10px;
+}
+
+.passcode-dots {
+  display: flex; justify-content: center; gap: 16px; margin: 18px 0;
+}
+.passcode-dots .dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--gold-deep); background: transparent;
+}
+.passcode-dots .dot.filled { background: var(--maroon-bright); border-color: var(--maroon-bright); }
+.passcode-dots.error .dot { border-color: var(--danger); background: var(--danger); }
+
+.keypad {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  max-width: 300px; margin: 0 auto;
+}
+.keypad button {
+  padding: 18px 0; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--bg-panel-2); color: var(--ink);
+  font-size: 1.4rem; font-family: 'Barlow'; font-weight: 600;
+}
+.keypad button:active { background: var(--gold-bright); color: #FFF; }
+.keypad button.keypad-back { font-size: 1.1rem; color: var(--maroon-bright); }
+
+/* ============ HISTORY PAGE ============ */
+.history-link {
+  color: #FFF6E4; text-decoration: underline; font-size: 0.9rem;
+  font-family: 'Barlow Semi Condensed'; font-weight: 600;
+}
+.history-search-bar {
+  padding: 18px 24px 4px;
+}
+.history-search-bar input {
+  width: 100%; padding: 14px 16px; border-radius: 10px;
+  border: 1.5px solid var(--line); background: var(--bg-panel);
+  color: var(--ink); font-size: 1.1rem; font-family: 'Barlow';
+}
+.history-list { padding: 12px 24px 24px; }
+.history-card {
+  background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 16px 18px; margin-bottom: 12px; box-shadow: var(--shadow);
+}
+.history-card-top {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+}
+.history-meta { font-size: 0.85rem; color: var(--cream-dim); margin-top: 4px; }
 
 /* ============ KITCHEN SCREEN ============ */
 .board { padding: 22px; }
@@ -292,11 +355,12 @@ h1, h2, h3, .display {
   display: flex; justify-content: space-between; align-items: center;
 }
 .order-id {
-  font-family: 'Anton', sans-serif; font-size: 1.35rem; color: var(--ink);
+  font-family: 'Barlow Semi Condensed'; font-weight: 700; font-size: 0.9rem;
+  color: var(--cream-dim); letter-spacing: 0.02em;
 }
 .order-name {
-  font-family: 'Barlow Semi Condensed'; font-weight: 700;
-  color: var(--gold-deep); font-size: 0.95rem; margin-left: 8px;
+  font-family: 'Anton', sans-serif; font-size: 1.5rem; color: var(--ink);
+  margin-right: 8px;
 }
 .order-elapsed { font-size: 0.82rem; color: var(--cream-dim); }
 .order-items-list {
@@ -329,8 +393,8 @@ h1, h2, h3, .display {
 .pickup-row-left {
   display: flex; align-items: baseline; gap: 14px;
 }
-.pickup-order-id { font-family: 'Anton', sans-serif; font-size: 1.6rem; color: var(--maroon); }
-.pickup-name { font-size: 1.15rem; color: var(--ink); font-weight: 500; }
+.pickup-order-id { font-family: 'Barlow Semi Condensed'; font-weight: 700; font-size: 1rem; color: var(--cream-dim); }
+.pickup-name { font-size: 1.6rem; font-family: 'Anton', sans-serif; color: var(--maroon); }
 .status-pill {
   font-family: 'Barlow Semi Condensed'; font-weight: 700; font-size: 0.95rem;
   padding: 8px 18px; border-radius: 30px; text-transform: uppercase; letter-spacing: 0.03em;
@@ -339,6 +403,9 @@ h1, h2, h3, .display {
 .status-pill.received { background: var(--status-received); }
 .status-pill.in_progress { background: var(--status-progress); }
 .status-pill.ready { background: var(--status-ready); }
+.status-pill.completed { background: var(--cream-dim); }
+.status-pill.awaiting_payment { background: var(--gold-deep); }
+.status-pill.failed { background: var(--danger); }
 
 .empty-state { color: var(--cream-dim); text-align: center; padding: 40px; font-size: 1.1rem; }
 

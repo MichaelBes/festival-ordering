@@ -68,8 +68,8 @@
         <div class="order-card status-${o.status}" data-id="${o.orderId}">
           <div class="order-card-top">
             <span>
-              <span class="order-id">${o.orderId}</span>
               ${o.customerName ? `<span class="order-name">${o.customerName}</span>` : ''}
+              <span class="order-id">${o.orderId}</span>
               ${o.paymentMethod === 'cash' ? '<span class="order-tag">CASH</span>' : ''}
             </span>
             <span class="order-elapsed">${timeAgo(o.timestamp)}</span>
