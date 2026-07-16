@@ -59,23 +59,30 @@
   <!-- Cash: volunteer must confirm before the order is sent -->
   <div class="modal-backdrop" id="cashConfirmModal" style="display:none;">
     <div class="modal">
-      <div class="flip-icon">🔄📱</div>
-      <h2>Turn the iPad to a volunteer</h2>
-      <div class="cash-summary">
-        <div class="cash-summary-row"><span>Order for</span><span id="cashConfirmName">—</span></div>
-        <div class="cash-summary-row total"><span>Collect</span><span id="cashConfirmTotal">$0</span></div>
+      <div id="cashKeypadState">
+        <div class="flip-icon">🔄📱</div>
+        <h2>Turn the iPad to a volunteer</h2>
+        <div class="cash-summary">
+          <div class="cash-summary-row"><span>Order for</span><span id="cashConfirmName">—</span></div>
+          <div class="cash-summary-row total"><span>Collect</span><span id="cashConfirmTotal">$0</span></div>
+        </div>
+        <p>Volunteer: enter the passcode once cash is received.</p>
+        <div class="passcode-dots" id="passcodeDots">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+        <div class="keypad" id="cashKeypad">
+          <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button>
+          <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button>
+          <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button>
+          <button data-key="clear" class="keypad-back">Clear</button><button data-key="0">0</button><button data-key="back" class="keypad-back">⌫</button>
+        </div>
+        <div class="cancel-link" id="cashCancel">Cancel</div>
       </div>
-      <p>Volunteer: enter the passcode once cash is received.</p>
-      <div class="passcode-dots" id="passcodeDots">
-        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <div id="cashSendingState" style="display:none;">
+        <h2>Sending order...</h2>
+        <div class="spinner"></div>
+        <p>One moment.</p>
       </div>
-      <div class="keypad" id="cashKeypad">
-        <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button>
-        <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button>
-        <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button>
-        <button data-key="clear" class="keypad-back">Clear</button><button data-key="0">0</button><button data-key="back" class="keypad-back">⌫</button>
-      </div>
-      <div class="cancel-link" id="cashCancel">Cancel</div>
     </div>
   </div>
 
@@ -229,6 +236,8 @@
       document.getElementById('cashConfirmTotal').textContent = '$' + cartTotal();
       enteredPasscode = '';
       renderPasscodeDots(false);
+      document.getElementById('cashSendingState').style.display = 'none';
+      document.getElementById('cashKeypadState').style.display = 'block';
       document.getElementById('cashConfirmModal').style.display = 'flex';
     });
 
@@ -266,16 +275,21 @@
     });
 
     async function sendCashOrder() {
-      document.getElementById('cashConfirmModal').style.display = 'none';
+      document.getElementById('cashKeypadState').style.display = 'none';
+      document.getElementById('cashSendingState').style.display = 'block';
       try {
         const result = await submitOrder({
           station, items: currentItems(), total: cartTotal(),
           paymentMethod: 'cash', customerName,
         });
+        document.getElementById('cashConfirmModal').style.display = 'none';
         showConfirmation(result.orderId);
       } catch (err) {
         alert('Something went wrong sending your order. Please tell a volunteer.\n' + err.message);
-        document.getElementById('cashConfirmModal').style.display = 'flex';
+        document.getElementById('cashSendingState').style.display = 'none';
+        document.getElementById('cashKeypadState').style.display = 'block';
+        enteredPasscode = '';
+        renderPasscodeDots(false);
       }
     }
 
