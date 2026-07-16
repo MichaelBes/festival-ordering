@@ -111,6 +111,15 @@
       const order = ordersState.find(o => o.orderId === orderId);
       if (!order) return;
 
+      // Warn (but don't hard-block) if one of the kitchens this order
+      // needs hasn't actually started their part yet — easy to miss
+      // when an order shows up here as soon as just one kitchen starts.
+      if (order.needsMain && !order.mainStarted) {
+        if (!confirm('Main Kitchen hasn\'t started this order yet. Mark it ready anyway?')) return;
+      } else if (order.needsSandwich && !order.sandwichStarted) {
+        if (!confirm('Sandwich Kitchen hasn\'t started this order yet. Mark it ready anyway?')) return;
+      }
+
       pendingUpdates[orderId] = 'ready';
       order.status = 'ready';
       render();
