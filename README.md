@@ -11,8 +11,12 @@ separately once you wire it in.
 1. Go to sheets.google.com → create a **new blank Sheet**. Name it
    something like "Festival Orders".
 2. Rename the first tab (bottom-left) to exactly `Orders`.
-3. In row 1, add these headers exactly, one per column (A–H):
-   `OrderID | Station | Timestamp | ItemsSummary | Total | PaymentMethod | Status | CustomerName`
+3. In row 1, add these headers exactly, one per column (A–K):
+   `OrderID | Station | Timestamp | ItemsJSON | Total | PaymentMethod | Status | CustomerName | CheckoutId | MainStarted | SandwichStarted`
+
+   **If you already built the sheet from an earlier version:** just add
+   two more headers, `MainStarted` in column J and `SandwichStarted`
+   in column K — everything else stays the same.
 
 ## 2. Add the backend script
 
@@ -92,6 +96,29 @@ adding real card payments later is a config change, not a rebuild.
 4. Test with a real card on-site before the festival opens — place
    a $1 test order and make sure the correct Terminal lights up.
 
+## The kitchen workflow — which screen is which
+
+- **`index.html?station=1` / `?station=2`** — the two order-taking iPads
+- **`kitchen.html`** — **Main Kitchen** screen. Shows only orders with
+  main-line items, filtered to just those items. One button: **Start
+  Order**. Tapping it removes it from this screen.
+- **`kitchen-sandwiches.html`** — **Sandwich Kitchen** screen. Same
+  idea, but only for items tagged `kitchen: "sandwich"` in `config.js`.
+- **`assembly.html`** — **Assembly** screen. As soon as *either*
+  kitchen starts an order, the *entire* order (every item, from both
+  kitchens) appears here so whoever's assembling it can see the whole
+  picture and gather everything. One button: **Mark Ready**.
+- **`pickup.html`** — the pickup display, unchanged.
+- **`history.html`** — searchable order lookup, unchanged.
+
+**Before the event, double-check `config.js`:** every menu item has a
+`kitchen: "main"` or `kitchen: "sandwich"` tag. I made reasonable
+guesses based on typical festival menus, but you know your actual two
+lines best — go through the `MENU` list and correct any that are wrong.
+An order with items from both kitchens will show up on both kitchen
+screens (each seeing only their own items) and then as one combined
+order on Assembly once either side has started it.
+
 ## 8. Set up the two order-taking iPads
 
 Each iPad needs to know which Terminal it's paired with. Do this
@@ -123,9 +150,21 @@ Do the same "Add to Home Screen" for the kitchen and pickup iPads
   starts, so old test orders don't show up.
 - **Test on the actual WiFi/hotspot** you'll use at the festival —
   that's the most likely failure point, not the software.
-- Cash orders currently flow straight to the kitchen tagged "CASH."
-  If you'd rather hold them until a cashier confirms payment, that's
-  a small addition to `Code.gs` — let me know and I can add it.
+- **Cash orders** now require a volunteer's confirmation before
+  they're sent to the kitchen: after the customer picks "Cash," the
+  iPad shows a "turn this to a volunteer" screen with a big Confirm
+  button. Only the volunteer's tap actually creates the order — this
+  stops walk-aways where someone orders and leaves without paying.
+- **Card orders** submit immediately and show a "pay on the
+  terminal" screen with a spinner. The order only shows the customer
+  their confirmation number once the terminal reports the payment
+  succeeded. While `SQUARE_ENABLED` is `false` (before you've wired
+  in your terminals), card payments are simulated as instantly
+  successful so you can still test this whole path today.
 - The kitchen screen plays a chime on new orders, but iOS requires
   one tap on the screen first before any sound can play — tap
   anywhere on the kitchen screen once after it loads each morning.
+- All three screens now update instantly when you tap a button
+  (Start Cooking, Mark Ready, tapping a ready order on pickup) —
+  the screen changes right away and syncs with the Sheet in the
+  background, rather than waiting on the network round-trip.

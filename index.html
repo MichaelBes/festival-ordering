@@ -198,7 +198,7 @@
       return Object.entries(cart).filter(([id, qty]) => qty > 0)
         .map(([id, qty]) => {
           const item = MENU.find(m => m.id === id);
-          return { id, name: item.name, qty, price: item.price };
+          return { id, name: item.name, qty, price: item.price, kitchen: item.kitchen };
         });
     }
 

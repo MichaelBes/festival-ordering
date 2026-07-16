@@ -49,6 +49,12 @@ async function updateOrderStatus(orderId, status) {
   return postToBackend({ action: "updateStatus", orderId, status });
 }
 
+// Called by the Main Kitchen or Sandwich Kitchen screen when staff tap
+// "Start" on an order — marks that kitchen's portion as started.
+async function startOrderPortion(orderId, kitchen) {
+  return postToBackend({ action: "startPortion", orderId, kitchen });
+}
+
 // Used while a card order is on the "pay on terminal" screen — checks
 // whether the Square Terminal checkout has completed yet.
 async function checkPaymentStatus(orderId) {

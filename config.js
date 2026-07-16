@@ -4,20 +4,24 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // Your menu. id must be unique. price is in dollars.
+// "kitchen" tells the system which prep screen this item shows up on:
+// "main" = your main food line, "sandwich" = your sandwich line.
+// Double check these — I've guessed based on typical festival menus,
+// but you know your actual two lines best.
 const MENU = [
-  { id: "kofta",    name: "Kofta Plate",         price: 12, category: "Mains" },
-  { id: "shawarma", name: "Chicken Shawarma",    price: 10, category: "Mains" },
-  { id: "koshari",  name: "Koshari",             price: 9,  category: "Mains" },
-  { id: "falafel",  name: "Falafel Sandwich",    price: 7,  category: "Mains" },
-  { id: "molokhia", name: "Molokhia & Rice",     price: 9,  category: "Mains" },
-  { id: "warak",    name: "Grape Leaves (6pc)",  price: 6,  category: "Sides" },
-  { id: "baklava",  name: "Baklava (2pc)",       price: 4,  category: "Desserts" },
-  { id: "basbousa", name: "Basbousa",            price: 4,  category: "Desserts" },
-  { id: "karkade",  name: "Hibiscus Tea (Karkade)", price: 3, category: "Drinks" },
-  { id: "water",    name: "Bottled Water",       price: 1,  category: "Drinks" },
+  { id: "kofta",    name: "Kofta Plate",         price: 12, category: "Mains", kitchen: "main" },
+  { id: "shawarma", name: "Chicken Shawarma",    price: 10, category: "Mains", kitchen: "sandwich" },
+  { id: "koshari",  name: "Koshari",             price: 9,  category: "Mains", kitchen: "main" },
+  { id: "falafel",  name: "Falafel Sandwich",    price: 7,  category: "Mains", kitchen: "sandwich" },
+  { id: "molokhia", name: "Molokhia & Rice",     price: 9,  category: "Mains", kitchen: "main" },
+  { id: "warak",    name: "Grape Leaves (6pc)",  price: 6,  category: "Sides", kitchen: "main" },
+  { id: "baklava",  name: "Baklava (2pc)",       price: 4,  category: "Desserts", kitchen: "main" },
+  { id: "basbousa", name: "Basbousa",            price: 4,  category: "Desserts", kitchen: "main" },
+  { id: "karkade",  name: "Hibiscus Tea (Karkade)", price: 3, category: "Drinks", kitchen: "main" },
+  { id: "water",    name: "Bottled Water",       price: 1,  category: "Drinks", kitchen: "main" },
 ];
 
 // Which station number this iPad is. You can also override this

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Main Kitchen — St. George Festival</title>
+<title>Assembly — St. George Festival</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="style.css">
@@ -10,28 +10,23 @@
 <body class="kitchen">
   <div class="glow-bar"></div>
   <div class="topbar">
-    <h1>Main Kitchen</h1>
+    <h1>Assembly</h1>
     <div class="subtitle" id="clock"></div>
   </div>
 
   <div class="board">
-    <div class="col-heading">To Prepare <span class="count" id="queueCount">0</span></div>
+    <div class="col-heading">Put Together <span class="count" id="queueCount">0</span></div>
     <div id="queueList"></div>
   </div>
 
   <script src="config.js"></script>
   <script src="api.js"></script>
   <script>
-    const KITCHEN_AREA = "main"; // this file is the Main Kitchen screen
-
     let ordersState = [];
-    let pendingStarts = new Set(); // orderIds being started but not yet confirmed
+    let pendingUpdates = {}; // orderId -> status we've optimistically set but not yet confirmed
     let knownOrderIds = new Set();
     let firstLoad = true;
 
-    // Simple synthesized beep — no audio file needed.
-    // iOS requires a user tap before any sound can play, so the
-    // first tap anywhere on the screen "unlocks" audio.
     let audioCtx = null;
     document.body.addEventListener('click', () => {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -57,11 +52,11 @@
     }
 
     function orderCardHtml(o) {
-      // Only show the items that belong to THIS kitchen — the other
-      // kitchen's items (if any) are that screen's concern, not ours.
-      const myItems = (o.items || []).filter(i => i.kitchen === KITCHEN_AREA);
+      // Full order — every item, from both kitchens — so whoever's
+      // assembling it can see the whole picture.
+      const items = o.items || [];
       return `
-        <div class="order-card status-received" data-id="${o.orderId}">
+        <div class="order-card status-in_progress" data-id="${o.orderId}">
           <div class="order-card-top">
             <span>
               ${o.customerName ? `<span class="order-name">${o.customerName}</span>` : ''}
@@ -71,23 +66,21 @@
             <span class="order-elapsed">${timeAgo(o.timestamp)}</span>
           </div>
           <ul class="order-items-list">
-            ${myItems.map(i => `<li>${i.qty}× ${i.name}</li>`).join('')}
+            ${items.map(i => `<li>${i.qty}× ${i.name} <span class="history-meta">(${i.kitchen})</span></li>`).join('')}
           </ul>
           <div class="order-actions">
-            <button class="btn-start" data-id="${o.orderId}">Start Order</button>
+            <button class="btn-ready" data-id="${o.orderId}">Mark Ready</button>
           </div>
         </div>
       `;
     }
 
     function render() {
-      const queue = ordersState.filter(o =>
-        (KITCHEN_AREA === 'main' ? o.needsMain && !o.mainStarted : o.needsSandwich && !o.sandwichStarted)
-      );
+      const queue = ordersState.filter(o => o.status === 'in_progress');
       document.getElementById('queueCount').textContent = queue.length;
       document.getElementById('queueList').innerHTML = queue.length
         ? queue.map(orderCardHtml).join('')
-        : '<div class="empty-state">Nothing to prepare right now</div>';
+        : '<div class="empty-state">Nothing waiting on assembly</div>';
     }
 
     async function refresh() {
@@ -101,9 +94,10 @@
         knownOrderIds = currentIds;
         firstLoad = false;
 
-        // Don't let a background refresh bring back an order we just
-        // started, before that change has saved to the Sheet.
-        ordersState = data.orders.filter(o => !pendingStarts.has(o.orderId));
+        ordersState = data.orders;
+        ordersState.forEach(o => {
+          if (pendingUpdates[o.orderId]) o.status = pendingUpdates[o.orderId];
+        });
         render();
       } catch (err) {
         console.error('Refresh failed', err);
@@ -114,18 +108,21 @@
       const btn = e.target.closest('button[data-id]');
       if (!btn) return;
       const orderId = btn.dataset.id;
+      const order = ordersState.find(o => o.orderId === orderId);
+      if (!order) return;
 
-      pendingStarts.add(orderId);
-      ordersState = ordersState.filter(o => o.orderId !== orderId);
+      pendingUpdates[orderId] = 'ready';
+      order.status = 'ready';
       render();
 
       try {
-        await startOrderPortion(orderId, KITCHEN_AREA);
-        pendingStarts.delete(orderId);
+        await updateOrderStatus(orderId, 'ready');
+        delete pendingUpdates[orderId];
       } catch (err) {
-        pendingStarts.delete(orderId);
-        refresh(); // bring it back if the update failed
-        alert('Could not start that order — please try again.');
+        delete pendingUpdates[orderId];
+        order.status = 'in_progress';
+        render();
+        alert('Could not mark that order ready — please try again.');
       }
     });
 
