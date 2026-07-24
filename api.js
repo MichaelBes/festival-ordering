@@ -8,6 +8,26 @@ function getStation() {
   return params.get("station") || DEFAULT_STATION;
 }
 
+// Normalizes a phone number to the +1XXXXXXXXXX format Telnyx (and most
+// SMS APIs) expect, so nothing ever fails later just because someone
+// typed "555-123-4567" instead of "+15551234567". Returns "" if the
+// input is empty/unusable.
+function normalizePhoneNumber(raw) {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("+")) {
+    // Already has a country code — just strip stray formatting characters.
+    return "+" + trimmed.slice(1).replace(/\D/g, "");
+  }
+  const digits = trimmed.replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.length === 11 && digits.startsWith("1")) return "+" + digits;
+  if (digits.length === 10) return "+1" + digits;
+  // Anything unusual (too short/long, extension, etc.) — best effort,
+  // don't silently drop a number someone actually typed in.
+  return "+1" + digits;
+}
+
 // NOTE: Content-Type is deliberately "text/plain" on POST requests.
 // This avoids the browser sending a CORS "preflight" request first,
 // which Apps Script web apps don't handle well. Apps Script still

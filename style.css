@@ -511,13 +511,15 @@ h1, h2, h3, .display {
 .mobile-menu-wrap .menu-scroll { padding: 18px; }
 
 .cart-bar {
-  position: fixed; left: 16px; right: 16px; bottom: 16px;
+  position: fixed; left: 16px; right: 16px; bottom: 16px; width: auto;
   background: var(--maroon-bright); color: #FFF6E4;
-  border: none; border-radius: 16px; padding: 16px 20px;
+  border: none; border-radius: 16px; padding: 16px 20px; margin: 0;
   display: flex; align-items: center; justify-content: space-between;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35);
   font-family: 'Barlow'; font-weight: 700; font-size: 1rem;
-  z-index: 40;
+  z-index: 999;
+  -webkit-appearance: none; appearance: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .cart-bar-total { font-family: 'Anton', sans-serif; font-size: 1.15rem; }
 .cart-bar-view {

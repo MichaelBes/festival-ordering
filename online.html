@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Order Online — St. George Egyptian Festival</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css">
 <script src="https://web.squarecdn.com/v1/square.js"></script>
 </head>
 <body>
@@ -110,8 +110,8 @@
     </div>
   </div>
 
-  <script src="config.js?v=2"></script>
-  <script src="api.js?v=2"></script>
+  <script src="config.js"></script>
+  <script src="api.js"></script>
   <script>
     let cart = [];
     let customerName = '';
@@ -147,7 +147,7 @@
 
     continueBtn.addEventListener('click', () => {
       customerName = nameInput.value.trim();
-      customerPhone = phoneInput.value.trim();
+      customerPhone = normalizePhoneNumber(phoneInput.value);
       orderStartTime = Date.now();
       document.getElementById('welcomeScreen').style.display = 'none';
       document.getElementById('orderScreen').style.display = 'block';
