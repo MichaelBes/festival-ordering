@@ -357,11 +357,14 @@
 
     document.getElementById('checkoutBtn').addEventListener('click', async () => {
       const checkoutBtn = document.getElementById('checkoutBtn');
+      const originalText = checkoutBtn.textContent;
       checkoutBtn.disabled = true;
+      checkoutBtn.textContent = 'Checking availability...';
       try {
         await runCheckoutAvailabilityCheck();
       } finally {
         checkoutBtn.disabled = false;
+        checkoutBtn.textContent = originalText;
       }
     });
 

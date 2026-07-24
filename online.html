@@ -93,6 +93,12 @@
         <div class="cash-summary-row"><span>Order for</span><span id="paymentName">—</span></div>
         <div class="cash-summary-row total"><span>Total</span><span id="paymentTotal">$0</span></div>
       </div>
+      <div id="walletButtons">
+        <div id="apple-pay-button" class="wallet-btn-slot" style="display:none;"></div>
+        <div id="google-pay-button" class="wallet-btn-slot" style="display:none;"></div>
+      </div>
+      <div class="payment-divider" id="paymentDivider" style="display:none;">or pay by card</div>
+
       <div id="card-container" style="margin:16px 0;"></div>
       <button class="checkout-btn" id="payNowBtn">Pay Now</button>
       <p id="paymentError" style="color:var(--danger); display:none; margin-top:10px; font-size:0.9rem;"></p>
@@ -122,6 +128,8 @@
     let menuStatus = {};
     let orderStartTime = null;
     let payments, card;
+    let applePayInstance = null;
+    let googlePayInstance = null;
 
     // ---- Square Web Payments SDK setup ----
     async function initializeSquare() {
@@ -135,6 +143,98 @@
       }
     }
     initializeSquare();
+
+    // Sets up Apple Pay / Google Pay buttons for the CURRENT cart total
+    // (has to be redone each time, since the amount changes). Each wallet
+    // gracefully just stays hidden if the device/browser doesn't support
+    // it — e.g. Apple Pay only shows on Safari, and even there only if
+    // the domain has been verified in the Square Dashboard.
+    async function setupWalletButtons(amount) {
+      const appleContainer = document.getElementById('apple-pay-button');
+      const googleContainer = document.getElementById('google-pay-button');
+      appleContainer.style.display = 'none';
+      googleContainer.style.display = 'none';
+      appleContainer.innerHTML = '';
+      googleContainer.innerHTML = '';
+      applePayInstance = null;
+      googlePayInstance = null;
+
+      if (!payments) {
+        document.getElementById('paymentDivider').style.display = 'none';
+        return;
+      }
+
+      const paymentRequest = payments.paymentRequest({
+        countryCode: 'US', currencyCode: 'USD',
+        total: { amount: amount.toFixed(2), label: 'Total' },
+      });
+
+      try {
+        applePayInstance = await payments.applePay(paymentRequest);
+        await applePayInstance.attach('#apple-pay-button');
+        appleContainer.style.display = 'block';
+      } catch (e) {
+        applePayInstance = null;
+      }
+
+      try {
+        googlePayInstance = await payments.googlePay(paymentRequest);
+        await googlePayInstance.attach('#google-pay-button', { buttonColor: 'black', buttonType: 'long' });
+        googleContainer.style.display = 'block';
+      } catch (e) {
+        googlePayInstance = null;
+      }
+
+      document.getElementById('paymentDivider').style.display =
+        (applePayInstance || googlePayInstance) ? 'block' : 'none';
+    }
+
+    // Shared by card, Apple Pay, and Google Pay — all three end up with a
+    // token, and from there the rest of the flow is identical.
+    async function processPaymentToken(token) {
+      const errorEl = document.getElementById('paymentError');
+      errorEl.style.display = 'none';
+      const result = await submitOnlineOrder({
+        items: currentItems(), total: cartTotal(), customerName, phone: customerPhone,
+        cardToken: token,
+      });
+      if (!result.success) throw new Error(result.error || 'Payment failed.');
+
+      document.getElementById('paymentModal').style.display = 'none';
+      document.getElementById('confirmName').textContent = customerName;
+      document.getElementById('confirmOrderId').textContent = 'Order #' + result.orderId;
+      document.getElementById('confirmModal').style.display = 'flex';
+    }
+
+    function showPaymentError(message) {
+      const errorEl = document.getElementById('paymentError');
+      errorEl.textContent = message;
+      errorEl.style.display = 'block';
+    }
+
+    // These listen on the wrapper divs (not Square's inner button), so
+    // they keep working even though setupWalletButtons() replaces the
+    // inner content fresh every time the payment screen opens.
+    document.getElementById('apple-pay-button').addEventListener('click', async () => {
+      if (!applePayInstance) return;
+      try {
+        const result = await applePayInstance.tokenize();
+        if (result.status !== 'OK') throw new Error('Apple Pay was cancelled or declined.');
+        await processPaymentToken(result.token);
+      } catch (err) {
+        showPaymentError(err.message);
+      }
+    });
+    document.getElementById('google-pay-button').addEventListener('click', async () => {
+      if (!googlePayInstance) return;
+      try {
+        const result = await googlePayInstance.tokenize();
+        if (result.status !== 'OK') throw new Error('Google Pay was cancelled or declined.');
+        await processPaymentToken(result.token);
+      } catch (err) {
+        showPaymentError(err.message);
+      }
+    });
 
     // ---- Welcome screen ----
     const nameInput = document.getElementById('customerNameWelcome');
@@ -352,11 +452,14 @@
     // ---- Checkout: availability check, then payment ----
     document.getElementById('checkoutBtn').addEventListener('click', async () => {
       const checkoutBtn = document.getElementById('checkoutBtn');
+      const originalText = checkoutBtn.textContent;
       checkoutBtn.disabled = true;
+      checkoutBtn.textContent = 'Checking availability...';
       try {
         await runCheckoutAvailabilityCheck();
       } finally {
         checkoutBtn.disabled = false;
+        checkoutBtn.textContent = originalText;
       }
     });
 
@@ -418,6 +521,7 @@
       document.getElementById('paymentTotal').textContent = '$' + cartTotal();
       document.getElementById('paymentError').style.display = 'none';
       document.getElementById('paymentModal').style.display = 'flex';
+      setupWalletButtons(cartTotal());
     }
     document.getElementById('paymentCancelBtn').addEventListener('click', () => {
       document.getElementById('paymentModal').style.display = 'none';
@@ -437,19 +541,9 @@
         if (tokenResult.status !== 'OK') {
           throw new Error((tokenResult.errors && tokenResult.errors[0] && tokenResult.errors[0].message) || 'Card was declined.');
         }
-        const result = await submitOnlineOrder({
-          items: currentItems(), total: cartTotal(), customerName, phone: customerPhone,
-          cardToken: tokenResult.token,
-        });
-        if (!result.success) throw new Error(result.error || 'Payment failed.');
-
-        document.getElementById('paymentModal').style.display = 'none';
-        document.getElementById('confirmName').textContent = customerName;
-        document.getElementById('confirmOrderId').textContent = 'Order #' + result.orderId;
-        document.getElementById('confirmModal').style.display = 'flex';
+        await processPaymentToken(tokenResult.token);
       } catch (err) {
-        errorEl.textContent = err.message;
-        errorEl.style.display = 'block';
+        showPaymentError(err.message);
       } finally {
         payBtn.disabled = false;
         payBtn.textContent = 'Pay Now';

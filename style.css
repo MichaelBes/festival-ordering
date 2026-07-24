@@ -530,3 +530,13 @@ h1, h2, h3, .display {
   background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px;
   font-size: 0.9rem;
 }
+.wallet-btn-slot { min-height: 44px; margin-bottom: 10px; }
+.payment-divider {
+  text-align: center; color: var(--cream-dim); font-size: 0.85rem;
+  margin: 14px 0; position: relative;
+}
+.payment-divider::before, .payment-divider::after {
+  content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: var(--line);
+}
+.payment-divider::before { left: 0; }
+.payment-divider::after { right: 0; }
