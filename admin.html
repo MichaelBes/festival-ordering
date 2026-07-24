@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin — St. George Festival</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="glow-bar"></div>
+  <div class="topbar">
+    <h1>Admin Dashboard</h1>
+    <div class="subtitle" id="clock"></div>
+  </div>
+
+  <!-- PIN gate -->
+  <div class="welcome-wrap" id="pinScreen">
+    <div class="welcome-card">
+      <h1>Admin Access</h1>
+      <div class="tagline">Enter the admin passcode to continue</div>
+      <label for="pinInput">Passcode</label>
+      <input type="password" id="pinInput" inputmode="numeric" placeholder="••••" autocomplete="off">
+      <button class="continue-btn" id="pinSubmit">Enter</button>
+      <p id="pinError" style="color:var(--danger); display:none; margin-top:10px;">Incorrect passcode.</p>
+    </div>
+  </div>
+
+  <!-- Main dashboard, hidden until PIN is correct -->
+  <div id="dashboard" style="display:none;">
+
+    <div class="board">
+      <div class="col-heading">Today's Activity</div>
+      <div class="stat-grid" id="statGrid"></div>
+
+      <div class="col-heading" style="margin-top:22px;">Needs Attention</div>
+      <div id="flaggedList"></div>
+
+      <div class="col-heading" style="margin-top:22px;">Menu Availability</div>
+      <div id="menuStatusList"></div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script>
+    document.getElementById('pinInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkPin();
+    });
+    document.getElementById('pinSubmit').addEventListener('click', checkPin);
+
+    function checkPin() {
+      const val = document.getElementById('pinInput').value;
+      if (val === ADMIN_PASSCODE) {
+        document.getElementById('pinScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        startPolling();
+      } else {
+        document.getElementById('pinError').style.display = 'block';
+      }
+    }
+
+    // ---- Stats ----
+    const STATUS_LABEL = {
+      received: 'Received', in_progress: 'In Progress', ready: 'Ready',
+      completed: 'Picked Up', awaiting_payment: 'Awaiting Payment', failed: 'Payment Failed',
+    };
+
+    async function refreshStats() {
+      try {
+        const stats = await fetchStats();
+        renderStats(stats);
+        renderFlagged(stats.flagged);
+      } catch (err) {
+        console.error('Stats refresh failed', err);
+      }
+    }
+
+    function renderStats(stats) {
+      const boxes = [
+        { label: 'Orders Today', value: stats.totalToday },
+        ...Object.entries(stats.byStatus).map(([status, count]) => ({ label: STATUS_LABEL[status] || status, value: count })),
+        { label: 'Requests Today', value: stats.requestCountToday, note: 'Soft reference point — a personal Google account\'s daily Apps Script limit is roughly 20,000 requests.' },
+      ];
+      document.getElementById('statGrid').innerHTML = boxes.map(b => `
+        <div class="stat-box">
+          <div class="stat-value">${b.value}</div>
+          <div class="stat-label">${b.label}</div>
+          ${b.note ? `<div class="stat-note">${b.note}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function renderFlagged(flagged) {
+      const el = document.getElementById('flaggedList');
+      if (!flagged || flagged.length === 0) {
+        el.innerHTML = '<div class="empty-state">All clear — nothing needs attention right now.</div>';
+        return;
+      }
+      el.innerHTML = flagged.map(f => `
+        <div class="order-card status-received">
+          <div class="order-card-top"><span class="order-id">${f.orderId}</span></div>
+          <div class="order-items">${f.issue}</div>
+        </div>
+      `).join('');
+    }
+
+    // ---- Menu availability ----
+    let menuStatusCache = {};
+
+    async function refreshMenuStatus() {
+      try {
+        menuStatusCache = await fetchMenuStatus();
+        renderMenuStatusList();
+      } catch (err) {
+        console.error('Menu status refresh failed', err);
+      }
+    }
+
+    function renderMenuStatusList() {
+      const categories = [...new Set(MENU.map(m => m.category))];
+      document.getElementById('menuStatusList').innerHTML = categories.map(cat => `
+        <div class="category-label">${cat}</div>
+        ${MENU.filter(m => m.category === cat).map(item => {
+          const current = (menuStatusCache[item.id] && menuStatusCache[item.id].status) || 'normal';
+          const note = (menuStatusCache[item.id] && menuStatusCache[item.id].note) || '';
+          return `
+            <div class="menu-status-row">
+              <div class="menu-status-name">${item.name}</div>
+              <div class="menu-status-actions">
+                <button class="status-btn ${current === 'normal' ? 'selected-normal' : ''}" data-id="${item.id}" data-status="normal">Normal</button>
+                <button class="status-btn ${current === 'long_wait' ? 'selected-wait' : ''}" data-id="${item.id}" data-status="long_wait">Long Wait</button>
+                <button class="status-btn ${current === 'out_of_stock' ? 'selected-out' : ''}" data-id="${item.id}" data-status="out_of_stock">Out of Stock</button>
+              </div>
+              <input type="text" class="menu-status-note" data-note-id="${item.id}" placeholder="Optional note (e.g. back by 6pm)" value="${note}">
+            </div>
+          `;
+        }).join('')}
+      `).join('');
+    }
+
+    document.getElementById('menuStatusList').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-status]');
+      if (!btn) return;
+      const itemId = btn.dataset.id;
+      const status = btn.dataset.status;
+      const noteInput = document.querySelector(`input[data-note-id="${itemId}"]`);
+      const note = noteInput ? noteInput.value.trim() : '';
+
+      btn.disabled = true;
+      try {
+        await setMenuStatus(itemId, status, note);
+        menuStatusCache[itemId] = { status, note };
+        renderMenuStatusList();
+      } catch (err) {
+        alert('Could not update — please try again.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // Save a note on its own (e.g. editing text without changing status)
+    document.getElementById('menuStatusList').addEventListener('change', async (e) => {
+      const input = e.target.closest('input[data-note-id]');
+      if (!input) return;
+      const itemId = input.dataset.noteId;
+      const current = (menuStatusCache[itemId] && menuStatusCache[itemId].status) || 'normal';
+      try {
+        await setMenuStatus(itemId, current, input.value.trim());
+        menuStatusCache[itemId] = { status: current, note: input.value.trim() };
+      } catch (err) {
+        alert('Could not save note — please try again.');
+      }
+    });
+
+    function updateClock() {
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function startPolling() {
+      updateClock();
+      setInterval(updateClock, 30000);
+      refreshStats();
+      refreshMenuStatus();
+      setInterval(refreshStats, 5000);
+      setInterval(refreshMenuStatus, 10000);
+    }
+  </script>
+</body>
+</html>

@@ -96,6 +96,38 @@ adding real card payments later is a config change, not a rebuild.
 4. Test with a real card on-site before the festival opens — place
    a $1 test order and make sure the correct Terminal lights up.
 
+## The admin dashboard
+
+**`admin.html`** — a password-protected page for you (not staff/volunteers)
+to check on how the event is running and control menu availability live.
+
+**One-time setup:**
+1. In your Google Sheet, add a **second tab** named exactly `MenuStatus`
+   with this header row: `ItemId | Status | Note | UpdatedAt`
+   (You don't need to pre-fill any rows — it fills in automatically as
+   you use the dashboard.)
+2. Paste the updated `Code.gs` into Apps Script, save, and redeploy
+   (**Deploy → Manage deployments → edit → New version → Deploy**).
+3. Open `admin.html`, enter the passcode set in `config.js`'s
+   `ADMIN_PASSCODE` (default `2468` — change this to your own).
+
+**What it shows:**
+- **Today's Activity** — order counts by status, and a rough
+  "requests today" number as a sanity check against Apps Script's
+  daily quota (~20,000/day on a personal Google account).
+- **Needs Attention** — automatically flags orders that have been
+  sitting as "awaiting payment" or "received" for longer than
+  expected, in case something got missed or a card payment stalled.
+- **Menu Availability** — mark any item **Normal**, **Long Wait**, or
+  **Out of Stock**, with an optional note (e.g. "back by 6pm"). This
+  updates the order page within about 15 seconds — out-of-stock items
+  can't be added to a cart, long-wait items show a small warning but
+  can still be ordered.
+
+This passcode is a basic deterrent, not real security — treat it like
+a "staff only" sign, not a lock. Don't put anything truly sensitive
+behind it.
+
 ## The kitchen workflow — which screen is which
 
 - **`index.html?station=1` / `?station=2`** — the two order-taking iPads

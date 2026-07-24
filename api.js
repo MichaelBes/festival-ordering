@@ -65,3 +65,18 @@ async function checkPaymentStatus(orderId) {
 async function fetchHistory() {
   return getFromBackend({ action: "getHistory" });
 }
+
+// Returns { itemId: { status, note } } for items with a non-default status.
+async function fetchMenuStatus() {
+  return getFromBackend({ action: "getMenuStatus" });
+}
+
+// Admin-only: sets an item to "normal", "long_wait", or "out_of_stock".
+async function setMenuStatus(itemId, status, note) {
+  return postToBackend({ action: "setMenuStatus", itemId, status, note: note || "" });
+}
+
+// Admin-only: today's order stats and any flagged/stuck orders.
+async function fetchStats() {
+  return getFromBackend({ action: "getStats" });
+}

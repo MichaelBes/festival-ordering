@@ -4,7 +4,7 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // Your menu. id must be unique. price is in dollars.
 // "kitchen" tells the system which prep screen this item shows up on:
@@ -126,3 +126,13 @@ const PAYMENT_POLL_INTERVAL_MS = 2000;
 // 4-digit code a volunteer must enter to confirm a cash order before
 // it's sent to the kitchen. Change this to whatever you'd like.
 const VOLUNTEER_PASSCODE = "1111";
+
+// Passcode to access admin.html. This is a basic deterrent, not real
+// security — anyone who knows it (or views the page source) can get
+// in. Good enough to stop casual/accidental access on a public link,
+// not meant to stop someone determined. Change this to your own code.
+const ADMIN_PASSCODE = "2468";
+
+// How often (ms) the order page rechecks whether any item's status
+// (long wait / out of stock) has changed.
+const MENU_STATUS_POLL_INTERVAL_MS = 15000;

@@ -130,6 +130,16 @@
     let customerName = '';
     let customizingItem = null; // the MENU item currently open in the customize modal
     let customizeSelections = []; // chosen choice index per option group, for the open modal
+    let menuStatus = {}; // itemId -> { status, note }, refreshed periodically
+
+    async function refreshMenuStatus() {
+      try {
+        menuStatus = await fetchMenuStatus();
+        renderMenu();
+      } catch (err) {
+        console.error('Menu status refresh failed', err);
+      }
+    }
 
     // ---- Welcome screen ----
     const nameInput = document.getElementById('customerNameWelcome');
@@ -162,14 +172,20 @@
       wrap.innerHTML = categories.map(cat => `
         <div class="category-label">${cat}</div>
         <div class="item-grid">
-          ${MENU.filter(m => m.category === cat).map(item => `
-            <div class="item-card">
+          ${MENU.filter(m => m.category === cat).map(item => {
+            const status = (menuStatus[item.id] && menuStatus[item.id].status) || 'normal';
+            const note = (menuStatus[item.id] && menuStatus[item.id].note) || '';
+            const outOfStock = status === 'out_of_stock';
+            return `
+            <div class="item-card ${outOfStock ? 'item-out-of-stock' : ''}">
               ${item.image ? `<img class="item-image" src="${item.image}" alt="${item.name}" loading="lazy">` : ''}
               <div class="item-name">${item.name}</div>
               ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
+              ${status === 'long_wait' ? `<div class="item-status-tag tag-wait">⏱ Long wait${note ? ' — ' + note : ''}</div>` : ''}
+              ${outOfStock ? `<div class="item-status-tag tag-out">Out of stock${note ? ' — ' + note : ''}</div>` : ''}
               <div class="item-price">$${item.price}</div>
               <div class="item-controls">
-                ${item.options && item.options.length
+                ${outOfStock ? '' : (item.options && item.options.length
                   ? `<button class="add-btn" data-customize-id="${item.id}">
                        Customize & Add${totalQty(item.id) > 0 ? ` <span class="item-badge">${totalQty(item.id)}</span>` : ''}
                      </button>`
@@ -178,10 +194,11 @@
                        <span class="count" id="count-${item.id}">${simpleQty(item.id)}</span>
                        <button data-action="inc" data-id="${item.id}">+</button>
                      </div>`
-                }
+                )}
               </div>
             </div>
-          `).join('')}
+          `;
+          }).join('')}
         </div>
       `).join('');
     }
@@ -468,6 +485,8 @@
 
     renderMenu();
     renderCart();
+    refreshMenuStatus();
+    setInterval(refreshMenuStatus, MENU_STATUS_POLL_INTERVAL_MS);
   </script>
 </body>
 </html>
