@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Order Online — St. George Egyptian Festival</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="stylesheet" href="style.css?v=2">
+<script src="https://web.squarecdn.com/v1/square.js"></script>
+</head>
+<body>
+  <div class="glow-bar"></div>
+  <div class="topbar">
+    <h1>St. George Egyptian Festival</h1>
+    <div class="subtitle">Order Online</div>
+  </div>
+
+  <!-- Welcome / name-capture screen -->
+  <div class="welcome-wrap" id="welcomeScreen">
+    <div class="welcome-card">
+      <h1>Welcome!</h1>
+      <div class="tagline">Enter your name to start your order</div>
+      <label for="customerNameWelcome">Your name</label>
+      <input type="text" id="customerNameWelcome" placeholder="e.g. Mina" maxlength="30" autocomplete="off">
+      <label for="customerPhoneWelcome" style="margin-top:14px;">Phone number (optional)</label>
+      <input type="tel" id="customerPhoneWelcome" placeholder="For order updates, if enabled" maxlength="20" autocomplete="off">
+      <button class="continue-btn" id="continueBtn" disabled>Continue to Menu</button>
+    </div>
+  </div>
+
+  <!-- Ordering screen: mobile-first, full-width menu, no side cart panel -->
+  <div class="mobile-menu-wrap" id="orderScreen" style="display:none;">
+    <div class="menu-scroll" id="menuScroll"></div>
+  </div>
+
+  <!-- Sticky bottom cart bar -->
+  <button class="cart-bar" id="cartBar" style="display:none;">
+    <span id="cartBarSummary">0 items</span>
+    <span class="cart-bar-total" id="cartBarTotal">$0</span>
+    <span class="cart-bar-view">View Cart</span>
+  </button>
+
+  <!-- Cart modal -->
+  <div class="modal-backdrop" id="cartModal" style="display:none;">
+    <div class="modal" style="max-width:420px;">
+      <h2>Your Order</h2>
+      <div class="cart-lines" id="cartLines" style="max-height:50vh;"></div>
+      <div class="cart-total-row">
+        <span>Total</span>
+        <span id="cartTotal">$0</span>
+      </div>
+      <button class="checkout-btn" id="checkoutBtn" disabled>Checkout</button>
+      <div class="cancel-link" id="cartCloseBtn">Keep Browsing</div>
+    </div>
+  </div>
+
+  <!-- Item customization modal -->
+  <div class="modal-backdrop" id="customizeModal" style="display:none;">
+    <div class="modal">
+      <h2 id="customizeTitle">Item Name</h2>
+      <div id="customizeGroups"></div>
+      <button class="checkout-btn" id="customizeAddBtn" style="margin-top:16px;">Add to Order</button>
+      <div class="cancel-link" id="customizeCancel">Cancel</div>
+    </div>
+  </div>
+
+  <!-- Checkout blocked: out of stock -->
+  <div class="modal-backdrop" id="outOfStockModal" style="display:none;">
+    <div class="modal">
+      <h2>Sorry, we just ran out</h2>
+      <p>These items became unavailable while you were ordering. Please remove them to continue:</p>
+      <ul class="order-items-list" id="outOfStockList" style="text-align:left;"></ul>
+      <button class="checkout-btn" id="outOfStockOkBtn">Back to Menu</button>
+    </div>
+  </div>
+
+  <!-- Long-wait warning -->
+  <div class="modal-backdrop" id="longWaitModal" style="display:none;">
+    <div class="modal">
+      <h2>Heads up — longer wait</h2>
+      <p>These items now have a longer wait than usual:</p>
+      <ul class="order-items-list" id="longWaitList" style="text-align:left;"></ul>
+      <button class="checkout-btn" id="longWaitContinueBtn">Continue to Payment</button>
+      <div class="cancel-link" id="longWaitGoBackBtn">Go back and adjust order</div>
+    </div>
+  </div>
+
+  <!-- Payment modal: Square card form -->
+  <div class="modal-backdrop" id="paymentModal" style="display:none;">
+    <div class="modal">
+      <h2>Pay for Your Order</h2>
+      <div class="cash-summary">
+        <div class="cash-summary-row"><span>Order for</span><span id="paymentName">—</span></div>
+        <div class="cash-summary-row total"><span>Total</span><span id="paymentTotal">$0</span></div>
+      </div>
+      <div id="card-container" style="margin:16px 0;"></div>
+      <button class="checkout-btn" id="payNowBtn">Pay Now</button>
+      <p id="paymentError" style="color:var(--danger); display:none; margin-top:10px; font-size:0.9rem;"></p>
+      <div class="cancel-link" id="paymentCancelBtn">Cancel</div>
+    </div>
+  </div>
+
+  <!-- Confirmation -->
+  <div class="modal-backdrop" id="confirmModal" style="display:none;">
+    <div class="modal">
+      <h2>Order placed!</h2>
+      <div class="confirm-name-big" id="confirmName">Mina</div>
+      <div class="confirm-order-id" id="confirmOrderId">Order #ONL-001</div>
+      <p>We'll have it ready as soon as possible. Keep this order number handy.</p>
+      <button class="checkout-btn" id="confirmNewOrderBtn">Start a New Order</button>
+    </div>
+  </div>
+
+  <script src="config.js?v=2"></script>
+  <script src="api.js?v=2"></script>
+  <script>
+    let cart = [];
+    let customerName = '';
+    let customerPhone = '';
+    let customizingItem = null;
+    let customizeSelections = [];
+    let menuStatus = {};
+    let orderStartTime = null;
+    let payments, card;
+
+    // ---- Square Web Payments SDK setup ----
+    async function initializeSquare() {
+      try {
+        if (!window.Square) { console.error('Square.js did not load'); return; }
+        payments = window.Square.payments(SQUARE_APPLICATION_ID, SQUARE_LOCATION_ID_PUBLIC);
+        card = await payments.card();
+        await card.attach('#card-container');
+      } catch (err) {
+        console.error('Square init failed', err);
+      }
+    }
+    initializeSquare();
+
+    // ---- Welcome screen ----
+    const nameInput = document.getElementById('customerNameWelcome');
+    const phoneInput = document.getElementById('customerPhoneWelcome');
+    const continueBtn = document.getElementById('continueBtn');
+
+    nameInput.addEventListener('input', () => {
+      continueBtn.disabled = nameInput.value.trim().length === 0;
+    });
+    nameInput.focus();
+
+    continueBtn.addEventListener('click', () => {
+      customerName = nameInput.value.trim();
+      customerPhone = phoneInput.value.trim();
+      orderStartTime = Date.now();
+      document.getElementById('welcomeScreen').style.display = 'none';
+      document.getElementById('orderScreen').style.display = 'block';
+      refreshMenuStatus();
+      setInterval(refreshMenuStatus, MENU_STATUS_POLL_INTERVAL_MS);
+    });
+
+    // ---- Menu ----
+    function simpleQty(itemId) {
+      const line = cart.find(l => l.itemId === itemId && l.optionsText === '');
+      return line ? line.qty : 0;
+    }
+    function totalQty(itemId) {
+      return cart.filter(l => l.itemId === itemId).reduce((sum, l) => sum + l.qty, 0);
+    }
+
+    function renderMenu() {
+      const wrap = document.getElementById('menuScroll');
+      const categories = [...new Set(MENU.map(m => m.category))];
+      wrap.innerHTML = categories.map(cat => `
+        <div class="category-label">${cat}</div>
+        <div class="item-grid">
+          ${MENU.filter(m => m.category === cat).map(item => {
+            const status = (menuStatus[item.id] && menuStatus[item.id].status) || 'normal';
+            const note = (menuStatus[item.id] && menuStatus[item.id].note) || '';
+            const outOfStock = status === 'out_of_stock';
+            return `
+            <div class="item-card ${outOfStock ? 'item-out-of-stock' : ''}">
+              ${item.image ? `<img class="item-image" src="${item.image}" alt="${item.name}" loading="lazy">` : ''}
+              <div class="item-name">${item.name}</div>
+              ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
+              ${status === 'long_wait' ? `<div class="item-status-tag tag-wait">⏱ Long wait${note ? ' — ' + note : ''}</div>` : ''}
+              ${outOfStock ? `<div class="item-status-tag tag-out">Out of stock${note ? ' — ' + note : ''}</div>` : ''}
+              <div class="item-price">$${item.price}</div>
+              <div class="item-controls">
+                ${outOfStock ? '' : (item.options && item.options.length
+                  ? `<button class="add-btn" data-customize-id="${item.id}">
+                       Customize & Add${totalQty(item.id) > 0 ? ` <span class="item-badge">${totalQty(item.id)}</span>` : ''}
+                     </button>`
+                  : `<div class="stepper">
+                       <button data-action="dec" data-id="${item.id}">–</button>
+                       <span class="count" id="count-${item.id}">${simpleQty(item.id)}</span>
+                       <button data-action="inc" data-id="${item.id}">+</button>
+                     </div>`
+                )}
+              </div>
+            </div>
+          `;
+          }).join('')}
+        </div>
+      `).join('');
+    }
+
+    async function refreshMenuStatus() {
+      try {
+        menuStatus = await fetchMenuStatus();
+        renderMenu();
+      } catch (err) {
+        console.error('Menu status refresh failed', err);
+      }
+    }
+
+    // ---- Cart bar + cart modal ----
+    function renderCartBar() {
+      const bar = document.getElementById('cartBar');
+      const count = cart.reduce((sum, l) => sum + l.qty, 0);
+      if (count === 0) {
+        bar.style.display = 'none';
+        return;
+      }
+      bar.style.display = 'flex';
+      document.getElementById('cartBarSummary').textContent = count + (count === 1 ? ' item' : ' items');
+      document.getElementById('cartBarTotal').textContent = '$' + cartTotal();
+    }
+
+    function renderCart() {
+      const cartLinesEl = document.getElementById('cartLines');
+      const checkoutBtn = document.getElementById('checkoutBtn');
+
+      if (cart.length === 0) {
+        cartLinesEl.innerHTML = '<div class="cart-empty">Tap items to add them</div>';
+        checkoutBtn.disabled = true;
+      } else {
+        cartLinesEl.innerHTML = cart.map(line => `
+          <div class="cart-line">
+            <span>
+              <span class="qty">${line.qty}×</span>${line.name}
+              ${line.optionsText ? `<div class="cart-line-options">${line.optionsText}</div>` : ''}
+            </span>
+            <span class="cart-line-right">
+              $${line.price * line.qty}
+              <button class="cart-line-remove" data-remove="${line.lineId}">✕</button>
+            </span>
+          </div>
+        `).join('');
+        checkoutBtn.disabled = false;
+      }
+      document.getElementById('cartTotal').textContent = '$' + cartTotal();
+      renderCartBar();
+    }
+
+    document.getElementById('cartBar').addEventListener('click', () => {
+      document.getElementById('cartModal').style.display = 'flex';
+    });
+    document.getElementById('cartCloseBtn').addEventListener('click', () => {
+      document.getElementById('cartModal').style.display = 'none';
+    });
+    document.getElementById('cartLines').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-remove]');
+      if (!btn) return;
+      cart = cart.filter(l => l.lineId !== btn.dataset.remove);
+      renderMenu();
+      renderCart();
+    });
+
+    document.getElementById('menuScroll').addEventListener('click', (e) => {
+      const stepBtn = e.target.closest('button[data-action]');
+      if (stepBtn) {
+        const id = stepBtn.dataset.id;
+        const item = MENU.find(m => m.id === id);
+        let line = cart.find(l => l.itemId === id && l.optionsText === '');
+        if (stepBtn.dataset.action === 'inc') {
+          if (line) line.qty += 1;
+          else cart.push({ lineId: 'l' + Date.now() + Math.random(), itemId: id, name: item.name, price: item.price, qty: 1, kitchen: item.kitchen, optionsText: '' });
+        } else if (line) {
+          line.qty -= 1;
+          if (line.qty <= 0) cart = cart.filter(l => l !== line);
+        }
+        renderMenu();
+        renderCart();
+        return;
+      }
+      const customizeBtn = e.target.closest('button[data-customize-id]');
+      if (customizeBtn) openCustomizeModal(customizeBtn.dataset.customizeId);
+    });
+
+    // ---- Customization modal ----
+    function openCustomizeModal(itemId) {
+      customizingItem = MENU.find(m => m.id === itemId);
+      customizeSelections = customizingItem.options.map(g => g.default);
+      renderCustomizeModal();
+      document.getElementById('customizeModal').style.display = 'flex';
+    }
+    function renderCustomizeModal() {
+      document.getElementById('customizeTitle').textContent = customizingItem.name;
+      document.getElementById('customizeGroups').innerHTML = customizingItem.options.map((group, gi) => `
+        <div class="option-group">
+          <div class="option-group-label">${group.name}</div>
+          <div class="option-choices">
+            ${group.choices.map((choice, ci) => `
+              <button class="option-choice-btn ${customizeSelections[gi] === ci ? 'selected' : ''}"
+                      data-group="${gi}" data-choice="${ci}">${choice}</button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+    document.getElementById('customizeGroups').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-group]');
+      if (!btn) return;
+      customizeSelections[Number(btn.dataset.group)] = Number(btn.dataset.choice);
+      renderCustomizeModal();
+    });
+    document.getElementById('customizeCancel').addEventListener('click', () => {
+      document.getElementById('customizeModal').style.display = 'none';
+    });
+    document.getElementById('customizeAddBtn').addEventListener('click', () => {
+      const notes = customizingItem.options
+        .map((group, gi) => (customizeSelections[gi] !== group.default ? group.choices[customizeSelections[gi]] : null))
+        .filter(Boolean);
+      const optionsText = notes.join(', ');
+      let line = cart.find(l => l.itemId === customizingItem.id && l.optionsText === optionsText);
+      if (line) {
+        line.qty += 1;
+      } else {
+        cart.push({
+          lineId: 'l' + Date.now() + Math.random(), itemId: customizingItem.id, name: customizingItem.name,
+          price: customizingItem.price, qty: 1, kitchen: customizingItem.kitchen, optionsText,
+        });
+      }
+      document.getElementById('customizeModal').style.display = 'none';
+      renderMenu();
+      renderCart();
+    });
+
+    function cartTotal() {
+      return cart.reduce((sum, l) => sum + l.price * l.qty, 0);
+    }
+    function currentItems() {
+      return cart.map(l => ({
+        id: l.itemId, name: l.name, qty: l.qty, price: l.price, kitchen: l.kitchen, options: l.optionsText,
+      }));
+    }
+
+    function hideAllModals() {
+      ['cartModal', 'customizeModal', 'outOfStockModal', 'longWaitModal', 'paymentModal', 'confirmModal'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+      });
+    }
+
+    // ---- Checkout: availability check, then payment ----
+    document.getElementById('checkoutBtn').addEventListener('click', async () => {
+      const checkoutBtn = document.getElementById('checkoutBtn');
+      checkoutBtn.disabled = true;
+      try {
+        await runCheckoutAvailabilityCheck();
+      } finally {
+        checkoutBtn.disabled = false;
+      }
+    });
+
+    async function runCheckoutAvailabilityCheck() {
+      try {
+        menuStatus = await fetchMenuStatus();
+      } catch (err) { /* fall through on network hiccup */ }
+      renderMenu();
+
+      const cartItemIds = [...new Set(cart.map(l => l.itemId))];
+      const outOfStock = [];
+      const newlyLongWait = [];
+
+      cartItemIds.forEach(id => {
+        const entry = menuStatus[id];
+        if (!entry) return;
+        const item = MENU.find(m => m.id === id);
+        if (entry.status === 'out_of_stock') {
+          outOfStock.push(item.name);
+        } else if (entry.status === 'long_wait') {
+          const changedAt = entry.updatedAt ? new Date(entry.updatedAt).getTime() : 0;
+          if (orderStartTime && changedAt > orderStartTime) {
+            newlyLongWait.push(item.name);
+          }
+        }
+      });
+
+      if (outOfStock.length > 0) {
+        document.getElementById('cartModal').style.display = 'none';
+        document.getElementById('outOfStockList').innerHTML = outOfStock.map(n => `<li>${n}</li>`).join('');
+        document.getElementById('outOfStockModal').style.display = 'flex';
+        return;
+      }
+      if (newlyLongWait.length > 0) {
+        document.getElementById('cartModal').style.display = 'none';
+        document.getElementById('longWaitList').innerHTML = newlyLongWait.map(n => `<li>${n}</li>`).join('');
+        document.getElementById('longWaitModal').style.display = 'flex';
+        return;
+      }
+      openPaymentModal();
+    }
+    document.getElementById('outOfStockOkBtn').addEventListener('click', () => {
+      document.getElementById('outOfStockModal').style.display = 'none';
+      document.getElementById('cartModal').style.display = 'flex';
+    });
+    document.getElementById('longWaitGoBackBtn').addEventListener('click', () => {
+      document.getElementById('longWaitModal').style.display = 'none';
+      document.getElementById('cartModal').style.display = 'flex';
+    });
+    document.getElementById('longWaitContinueBtn').addEventListener('click', () => {
+      document.getElementById('longWaitModal').style.display = 'none';
+      openPaymentModal();
+    });
+
+    // ---- Payment ----
+    function openPaymentModal() {
+      document.getElementById('cartModal').style.display = 'none';
+      document.getElementById('paymentName').textContent = customerName;
+      document.getElementById('paymentTotal').textContent = '$' + cartTotal();
+      document.getElementById('paymentError').style.display = 'none';
+      document.getElementById('paymentModal').style.display = 'flex';
+    }
+    document.getElementById('paymentCancelBtn').addEventListener('click', () => {
+      document.getElementById('paymentModal').style.display = 'none';
+      document.getElementById('cartModal').style.display = 'flex';
+    });
+
+    document.getElementById('payNowBtn').addEventListener('click', async () => {
+      const payBtn = document.getElementById('payNowBtn');
+      const errorEl = document.getElementById('paymentError');
+      errorEl.style.display = 'none';
+      payBtn.disabled = true;
+      payBtn.textContent = 'Processing...';
+
+      try {
+        if (!card) throw new Error('Payment form did not load — please refresh and try again.');
+        const tokenResult = await card.tokenize();
+        if (tokenResult.status !== 'OK') {
+          throw new Error((tokenResult.errors && tokenResult.errors[0] && tokenResult.errors[0].message) || 'Card was declined.');
+        }
+        const result = await submitOnlineOrder({
+          items: currentItems(), total: cartTotal(), customerName, phone: customerPhone,
+          cardToken: tokenResult.token,
+        });
+        if (!result.success) throw new Error(result.error || 'Payment failed.');
+
+        document.getElementById('paymentModal').style.display = 'none';
+        document.getElementById('confirmName').textContent = customerName;
+        document.getElementById('confirmOrderId').textContent = 'Order #' + result.orderId;
+        document.getElementById('confirmModal').style.display = 'flex';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        payBtn.disabled = false;
+        payBtn.textContent = 'Pay Now';
+      }
+    });
+
+    document.getElementById('confirmNewOrderBtn').addEventListener('click', () => {
+      cart = [];
+      customerName = '';
+      customerPhone = '';
+      nameInput.value = '';
+      phoneInput.value = '';
+      continueBtn.disabled = true;
+      hideAllModals();
+      document.getElementById('orderScreen').style.display = 'none';
+      document.getElementById('welcomeScreen').style.display = 'flex';
+      nameInput.focus();
+      renderMenu();
+      renderCart();
+    });
+
+    renderMenu();
+    renderCart();
+  </script>
+</body>
+</html>

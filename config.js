@@ -136,3 +136,13 @@ const ADMIN_PASSCODE = "2468";
 // How often (ms) the order page rechecks whether any item's status
 // (long wait / out of stock) has changed.
 const MENU_STATUS_POLL_INTERVAL_MS = 15000;
+
+// ---- Online ordering (online.html) ----------------------------
+// Needed for the Square card form on the online ordering page.
+// Application ID is safe to expose publicly — it's different from
+// the secret Access Token in Code.gs, which never appears here.
+// Get both from the same Square Developer Dashboard app:
+// Credentials page (Application ID) and Locations page (Location ID
+// — same value already in Code.gs's SQUARE_LOCATION_ID).
+const SQUARE_APPLICATION_ID = "sq0idp-nk75rLZVR1aMkVOO_vry3w";
+const SQUARE_LOCATION_ID_PUBLIC = "L6VV44AAQ0SC3";

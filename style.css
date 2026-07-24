@@ -501,3 +501,26 @@ h1, h2, h3, .display {
   .cart-panel { max-height: 48vh; }
   .columns { grid-template-columns: 1fr; }
 }
+
+/* ============ MOBILE ONLINE ORDERING (online.html) ============ */
+.mobile-menu-wrap {
+  height: calc(100% - 61px);
+  overflow-y: auto;
+  padding-bottom: 90px; /* room for the sticky cart bar */
+}
+.mobile-menu-wrap .menu-scroll { padding: 18px; }
+
+.cart-bar {
+  position: fixed; left: 16px; right: 16px; bottom: 16px;
+  background: var(--maroon-bright); color: #FFF6E4;
+  border: none; border-radius: 16px; padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  font-family: 'Barlow'; font-weight: 700; font-size: 1rem;
+  z-index: 40;
+}
+.cart-bar-total { font-family: 'Anton', sans-serif; font-size: 1.15rem; }
+.cart-bar-view {
+  background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px;
+  font-size: 0.9rem;
+}

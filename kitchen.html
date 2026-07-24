@@ -5,7 +5,7 @@
 <title>Main Kitchen — St. George Festival</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body class="kitchen">
   <div class="glow-bar"></div>
@@ -19,8 +19,8 @@
     <div id="queueList"></div>
   </div>
 
-  <script src="config.js"></script>
-  <script src="api.js"></script>
+  <script src="config.js?v=2"></script>
+  <script src="api.js?v=2"></script>
   <script>
     const KITCHEN_AREA = "main"; // this file is the Main Kitchen screen
 
@@ -66,7 +66,7 @@
             <span>
               ${o.customerName ? `<span class="order-name">${o.customerName}</span>` : ''}
               <span class="order-id">${o.orderId}</span>
-              ${o.paymentMethod === 'cash' ? '<span class="order-tag">CASH</span>' : ''}
+              ${o.paymentMethod === 'cash' ? '<span class="order-tag">CASH</span>' : ''}${o.station === 'online' ? '<span class="order-tag">ONLINE</span>' : ''}
             </span>
             <span class="order-elapsed">${timeAgo(o.timestamp)}</span>
           </div>

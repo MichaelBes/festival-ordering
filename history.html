@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Order History — St. George Festival</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
   <div class="glow-bar"></div>
@@ -21,8 +21,8 @@
     <div class="empty-state">Loading orders...</div>
   </div>
 
-  <script src="config.js"></script>
-  <script src="api.js"></script>
+  <script src="config.js?v=2"></script>
+  <script src="api.js?v=2"></script>
   <script>
     let allOrders = [];
 
@@ -47,7 +47,7 @@
           <ul class="order-items-list">
             ${items.map(i => `<li>${i.qty}× ${i.name}${i.options ? ` <span class="order-tag">${i.options}</span>` : ''}</li>`).join('')}
           </ul>
-          <div class="history-meta">${time} · $${o.total} · ${o.paymentMethod === 'cash' ? 'Cash' : 'Card'} · Station ${o.station}</div>
+          <div class="history-meta">${time} · $${o.total} · ${o.paymentMethod === 'cash' ? 'Cash' : 'Card'} · ${o.station === 'online' ? 'Online Order' : 'Station ' + o.station}</div>
         </div>
       `;
     }
