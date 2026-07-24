@@ -13,11 +13,11 @@
     <h1>St. George Egyptian Festival</h1>
     <div class="subtitle">Order Online</div>
   </div>
+  <img src="images/flyer.jpeg" alt="St. George Egyptian Festival flyer" class="flyer-banner" id="flyerBanner">
 
   <!-- Welcome / name-capture screen -->
   <div class="welcome-wrap" id="welcomeScreen">
     <div class="welcome-card">
-      <img src="images/flyer.jpeg" alt="St. George Egyptian Festival flyer" class="flyer-image">
       <h1>Welcome!</h1>
       <div class="tagline">Enter your name to start your order</div>
       <label for="customerNameWelcome">Your name</label>
@@ -252,6 +252,7 @@
       orderStartTime = Date.now();
       document.getElementById('welcomeScreen').style.display = 'none';
       document.getElementById('orderScreen').style.display = 'block';
+      document.getElementById('flyerBanner').style.display = 'none';
       refreshMenuStatus();
       setInterval(refreshMenuStatus, MENU_STATUS_POLL_INTERVAL_MS);
     });
@@ -351,10 +352,12 @@
     }
 
     document.getElementById('cartBar').addEventListener('click', () => {
+      document.getElementById('cartBar').style.display = 'none';
       document.getElementById('cartModal').style.display = 'flex';
     });
     document.getElementById('cartCloseBtn').addEventListener('click', () => {
       document.getElementById('cartModal').style.display = 'none';
+      renderCartBar();
     });
     document.getElementById('cartLines').addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-remove]');
@@ -390,6 +393,7 @@
       customizingItem = MENU.find(m => m.id === itemId);
       customizeSelections = customizingItem.options.map(g => g.default);
       renderCustomizeModal();
+      document.getElementById('cartBar').style.display = 'none';
       document.getElementById('customizeModal').style.display = 'flex';
     }
     function renderCustomizeModal() {
@@ -414,6 +418,7 @@
     });
     document.getElementById('customizeCancel').addEventListener('click', () => {
       document.getElementById('customizeModal').style.display = 'none';
+      renderCartBar();
     });
     document.getElementById('customizeAddBtn').addEventListener('click', () => {
       const notes = customizingItem.options
@@ -560,6 +565,7 @@
       hideAllModals();
       document.getElementById('orderScreen').style.display = 'none';
       document.getElementById('welcomeScreen').style.display = 'flex';
+      document.getElementById('flyerBanner').style.display = 'block';
       nameInput.focus();
       renderMenu();
       renderCart();
