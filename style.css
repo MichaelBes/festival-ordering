@@ -91,46 +91,6 @@ h1, h2, h3, .display {
   color: var(--maroon);
   margin: 0 0 8px;
 }
-.flyer-banner {
-  display: block; margin: 0 auto;
-  height: 190px; width: auto; max-width: 100%;
-  object-fit: contain;
-}
-/* online.html has a flyer banner above the welcome card, so it needs
-   top-aligned flow instead of vertical centering in the leftover
-   space — otherwise the math (which only knows about the topbar)
-   leaves a gap above the card. Scoped so index.html's plain welcome
-   screen (no banner) is unaffected. */
-.welcome-wrap.has-flyer {
-  height: auto;
-  align-items: flex-start;
-  padding-top: 14px;
-}
-/* Compact version of the welcome card so flyer + form both fit on
-   one screen without scrolling, on a typical phone. */
-.welcome-wrap.has-flyer .welcome-card {
-  padding: 26px 26px;
-}
-.welcome-wrap.has-flyer .welcome-card h1 {
-  font-size: 1.5rem;
-  margin-bottom: 4px;
-}
-.welcome-wrap.has-flyer .welcome-card .tagline {
-  margin-bottom: 16px;
-  font-size: 0.95rem;
-}
-.welcome-wrap.has-flyer .welcome-card label {
-  margin-bottom: 5px;
-}
-.welcome-wrap.has-flyer .welcome-card input {
-  padding: 11px 14px;
-  margin-bottom: 12px;
-  font-size: 1.05rem;
-}
-.welcome-wrap.has-flyer .welcome-card .continue-btn {
-  padding: 13px;
-  margin-top: 4px;
-}
 .welcome-card .tagline {
   color: var(--cream-dim);
   margin-bottom: 32px;

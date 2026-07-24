@@ -13,10 +13,10 @@
     <h1>St. George Egyptian Festival</h1>
     <div class="subtitle">Order Online</div>
   </div>
-  <img src="images/flyer.jpeg" alt="St. George Egyptian Festival flyer" class="flyer-banner" id="flyerBanner">
+
 
   <!-- Welcome / name-capture screen -->
-  <div class="welcome-wrap has-flyer" id="welcomeScreen">
+  <div class="welcome-wrap" id="welcomeScreen">
     <div class="welcome-card">
       <h1>Welcome!</h1>
       <div class="tagline">Enter your name to start your order</div>
@@ -259,7 +259,6 @@
       orderStartTime = Date.now();
       document.getElementById('welcomeScreen').style.display = 'none';
       document.getElementById('orderScreen').style.display = 'block';
-      document.getElementById('flyerBanner').style.display = 'none';
       refreshMenuStatus();
       setInterval(refreshMenuStatus, MENU_STATUS_POLL_INTERVAL_MS);
     });
@@ -577,7 +576,6 @@
       hideAllModals();
       document.getElementById('orderScreen').style.display = 'none';
       document.getElementById('welcomeScreen').style.display = 'flex';
-      document.getElementById('flyerBanner').style.display = 'block';
       nameInput.focus();
       renderMenu();
       renderCart();
