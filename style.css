@@ -472,6 +472,11 @@ h1, h2, h3, .display {
 .stat-value { font-family: 'Anton', sans-serif; font-size: 1.8rem; color: var(--maroon); }
 .stat-label { font-size: 0.82rem; color: var(--cream-dim); margin-top: 2px; }
 .stat-note { font-size: 0.7rem; color: var(--cream-dim); margin-top: 6px; line-height: 1.3; }
+.stat-box.quota-ok .stat-value { color: var(--status-ready); }
+.stat-box.quota-warn { border-color: var(--gold-deep); }
+.stat-box.quota-warn .stat-value { color: var(--gold-deep); }
+.stat-box.quota-danger { border-color: var(--danger); background: rgba(193,53,15,0.08); }
+.stat-box.quota-danger .stat-value { color: var(--danger); }
 
 .menu-status-row {
   background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px;

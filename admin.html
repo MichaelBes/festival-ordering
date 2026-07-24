@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Admin — St. George Festival</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
   <div class="glow-bar"></div>
@@ -30,6 +30,7 @@
 
     <div class="board">
       <div class="col-heading">Today's Activity</div>
+      <div id="quotaBox" style="margin-bottom:14px;"></div>
       <div class="stat-grid" id="statGrid"></div>
 
       <div class="col-heading" style="margin-top:22px;">Needs Attention</div>
@@ -45,8 +46,8 @@
     </div>
   </div>
 
-  <script src="config.js"></script>
-  <script src="api.js"></script>
+  <script src="config.js?v=2"></script>
+  <script src="api.js?v=2"></script>
   <script>
     document.getElementById('pinInput').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') checkPin();
@@ -135,15 +136,24 @@
       const boxes = [
         { label: 'Orders Today', value: stats.totalToday },
         ...Object.entries(stats.byStatus).map(([status, count]) => ({ label: STATUS_LABEL[status] || status, value: count })),
-        { label: 'Requests Today', value: stats.requestCountToday, note: 'Just a general activity count — this isn\'t measured against any daily cap. The number that actually matters (Square API calls) is tracked separately and stays tiny in comparison.' },
       ];
       document.getElementById('statGrid').innerHTML = boxes.map(b => `
         <div class="stat-box">
           <div class="stat-value">${b.value}</div>
           <div class="stat-label">${b.label}</div>
-          ${b.note ? `<div class="stat-note">${b.note}</div>` : ''}
         </div>
       `).join('');
+
+      // The number that actually matters against Square's real quota.
+      const pct = stats.urlFetchCountToday / 20000;
+      const level = pct > 0.8 ? 'quota-danger' : pct > 0.5 ? 'quota-warn' : 'quota-ok';
+      document.getElementById('quotaBox').innerHTML = `
+        <div class="stat-box ${level}" style="max-width:280px;">
+          <div class="stat-value">${stats.urlFetchCountToday} / 20,000</div>
+          <div class="stat-label">Square API Calls Today</div>
+          <div class="stat-note">This is the number tied to Apps Script's real daily limit — everything else on this page (page views, order checks) is separate and isn't capped the same way.</div>
+        </div>
+      `;
     }
 
     function renderFlagged(flagged) {
