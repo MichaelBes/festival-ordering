@@ -16,7 +16,7 @@
   <img src="images/flyer.jpeg" alt="St. George Egyptian Festival flyer" class="flyer-banner" id="flyerBanner">
 
   <!-- Welcome / name-capture screen -->
-  <div class="welcome-wrap" id="welcomeScreen">
+  <div class="welcome-wrap has-flyer" id="welcomeScreen">
     <div class="welcome-card">
       <h1>Welcome!</h1>
       <div class="tagline">Enter your name to start your order</div>
@@ -97,10 +97,12 @@
         <div id="apple-pay-button" class="wallet-btn-slot" style="display:none;"></div>
         <div id="google-pay-button" class="wallet-btn-slot" style="display:none;"></div>
       </div>
-      <div class="payment-divider" id="paymentDivider" style="display:none;">or pay by card</div>
+      <button class="payment-divider" id="paymentDivider" type="button" style="display:none;">or pay by card</button>
 
-      <div id="card-container" style="margin:16px 0;"></div>
-      <button class="checkout-btn" id="payNowBtn">Pay Now</button>
+      <div id="cardSection" style="display:none;">
+        <div id="card-container" style="margin:16px 0;"></div>
+        <button class="checkout-btn" id="payNowBtn">Pay Now</button>
+      </div>
       <p id="paymentError" style="color:var(--danger); display:none; margin-top:10px; font-size:0.9rem;"></p>
       <div class="cancel-link" id="paymentCancelBtn">Cancel</div>
     </div>
@@ -185,8 +187,13 @@
         googlePayInstance = null;
       }
 
-      document.getElementById('paymentDivider').style.display =
-        (applePayInstance || googlePayInstance) ? 'block' : 'none';
+      const hasWallet = !!(applePayInstance || googlePayInstance);
+      document.getElementById('paymentDivider').style.display = hasWallet ? 'block' : 'none';
+      // If a wallet is available, keep the card form tucked behind the
+      // toggle so it doesn't look like the preferred option. If neither
+      // wallet is available on this device, just show card directly —
+      // there's nothing to tuck it behind.
+      document.getElementById('cardSection').style.display = hasWallet ? 'none' : 'block';
     }
 
     // Shared by card, Apple Pay, and Google Pay — all three end up with a
@@ -531,6 +538,11 @@
     document.getElementById('paymentCancelBtn').addEventListener('click', () => {
       document.getElementById('paymentModal').style.display = 'none';
       document.getElementById('cartModal').style.display = 'flex';
+    });
+
+    document.getElementById('paymentDivider').addEventListener('click', () => {
+      document.getElementById('cardSection').style.display = 'block';
+      document.getElementById('paymentDivider').style.display = 'none';
     });
 
     document.getElementById('payNowBtn').addEventListener('click', async () => {

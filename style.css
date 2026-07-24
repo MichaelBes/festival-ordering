@@ -95,6 +95,16 @@ h1, h2, h3, .display {
   width: 100%; max-height: 160px; object-fit: cover; object-position: top;
   display: block; border: none;
 }
+/* online.html has a flyer banner above the welcome card, so it needs
+   top-aligned flow instead of vertical centering in the leftover
+   space — otherwise the math (which only knows about the topbar)
+   leaves a gap above the card. Scoped so index.html's plain welcome
+   screen (no banner) is unaffected. */
+.welcome-wrap.has-flyer {
+  height: auto;
+  align-items: flex-start;
+  padding-top: 20px;
+}
 .welcome-card .tagline {
   color: var(--cream-dim);
   margin-bottom: 32px;
@@ -532,11 +542,14 @@ h1, h2, h3, .display {
 }
 .wallet-btn-slot { min-height: 44px; margin-bottom: 10px; }
 .payment-divider {
+  width: 100%; background: none; border: none;
   text-align: center; color: var(--cream-dim); font-size: 0.85rem;
-  margin: 14px 0; position: relative;
+  margin: 14px 0; padding: 8px 0; position: relative;
+  font-family: 'Barlow'; text-decoration: underline;
+  -webkit-appearance: none; appearance: none;
 }
 .payment-divider::before, .payment-divider::after {
-  content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: var(--line);
+  content: ''; position: absolute; top: 50%; width: 32%; height: 1px; background: var(--line);
 }
 .payment-divider::before { left: 0; }
 .payment-divider::after { right: 0; }
