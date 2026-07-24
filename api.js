@@ -72,7 +72,8 @@ async function fetchHistory() {
 
 // Returns { itemId: { status, note } } for items with a non-default status.
 async function fetchMenuStatus() {
-  return getFromBackend({ action: "getMenuStatus" });
+  const result = await getFromBackend({ action: "getMenuStatus" });
+  return result.items || {};
 }
 
 // Admin-only: sets an item to "normal", "long_wait", or "out_of_stock".
