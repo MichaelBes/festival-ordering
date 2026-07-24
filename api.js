@@ -25,7 +25,11 @@ async function postToBackend(payload) {
 async function getFromBackend(params) {
   const url = new URL(APPS_SCRIPT_URL);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-  const res = await fetch(url.toString());
+  // Cache-buster: Apps Script GET responses can otherwise get cached by
+  // the browser since the URL is often identical between polls, causing
+  // "changes that appear to revert" even though they actually saved fine.
+  url.searchParams.set('_ts', Date.now());
+  const res = await fetch(url.toString(), { cache: 'no-store' });
   if (!res.ok) throw new Error("Request failed: " + res.status);
   return res.json();
 }
