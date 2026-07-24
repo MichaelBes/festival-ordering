@@ -135,7 +135,7 @@
       const boxes = [
         { label: 'Orders Today', value: stats.totalToday },
         ...Object.entries(stats.byStatus).map(([status, count]) => ({ label: STATUS_LABEL[status] || status, value: count })),
-        { label: 'Requests Today', value: stats.requestCountToday, note: 'Soft reference point — a personal Google account\'s daily Apps Script limit is roughly 20,000 requests.' },
+        { label: 'Requests Today', value: stats.requestCountToday, note: 'Just a general activity count — this isn\'t measured against any daily cap. The number that actually matters (Square API calls) is tracked separately and stays tiny in comparison.' },
       ];
       document.getElementById('statGrid').innerHTML = boxes.map(b => `
         <div class="stat-box">

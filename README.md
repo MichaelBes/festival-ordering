@@ -112,9 +112,12 @@ to check on how the event is running and control menu availability live.
    `ADMIN_PASSCODE` (default `2468` — change this to your own).
 
 **What it shows:**
-- **Today's Activity** — order counts by status, and a rough
-  "requests today" number as a sanity check against Apps Script's
-  daily quota (~20,000/day on a personal Google account).
+- **Today's Activity** — order counts by status, and a general "requests
+  today" activity count. Note: this isn't measured against any fixed
+  daily cap — Apps Script's actual 20,000/day limit applies only to
+  outbound calls it makes to Square's API (Terminal checkouts, payment
+  status checks), which is a small fraction of total traffic. This
+  counter is just a rough activity gauge, not a quota warning.
 - **Needs Attention** — automatically flags orders that have been
   sitting as "awaiting payment" or "received" for longer than
   expected, in case something got missed or a card payment stalled.
