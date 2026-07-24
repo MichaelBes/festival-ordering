@@ -92,7 +92,7 @@ h1, h2, h3, .display {
   margin: 0 0 8px;
 }
 .flyer-banner {
-  width: 100%; max-height: 160px; object-fit: cover; object-position: top;
+  width: 100%; height: 90px; max-height: 90px; object-fit: cover; object-position: top;
   display: block; border: none;
 }
 /* online.html has a flyer banner above the welcome card, so it needs
@@ -103,7 +103,32 @@ h1, h2, h3, .display {
 .welcome-wrap.has-flyer {
   height: auto;
   align-items: flex-start;
-  padding-top: 20px;
+  padding-top: 14px;
+}
+/* Compact version of the welcome card so flyer + form both fit on
+   one screen without scrolling, on a typical phone. */
+.welcome-wrap.has-flyer .welcome-card {
+  padding: 26px 26px;
+}
+.welcome-wrap.has-flyer .welcome-card h1 {
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+}
+.welcome-wrap.has-flyer .welcome-card .tagline {
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+}
+.welcome-wrap.has-flyer .welcome-card label {
+  margin-bottom: 5px;
+}
+.welcome-wrap.has-flyer .welcome-card input {
+  padding: 11px 14px;
+  margin-bottom: 12px;
+  font-size: 1.05rem;
+}
+.welcome-wrap.has-flyer .welcome-card .continue-btn {
+  padding: 13px;
+  margin-top: 4px;
 }
 .welcome-card .tagline {
   color: var(--cream-dim);
