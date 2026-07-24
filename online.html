@@ -184,7 +184,7 @@
 
       try {
         applePayInstance = await payments.applePay(paymentRequest);
-        await applePayInstance.attach('#apple-pay-button');
+        appleContainer.innerHTML = '<button type="button" class="apple-pay-native-btn">\uF8FF Pay</button>';
         appleContainer.style.display = 'block';
       } catch (e) {
         applePayInstance = null;
