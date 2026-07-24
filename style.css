@@ -93,7 +93,7 @@ h1, h2, h3, .display {
 }
 .flyer-banner {
   display: block; margin: 0 auto;
-  height: 130px; width: auto; max-width: 100%;
+  height: 190px; width: auto; max-width: 100%;
   object-fit: contain;
 }
 /* online.html has a flyer banner above the welcome card, so it needs
@@ -569,7 +569,7 @@ h1, h2, h3, .display {
 .wallet-btn-slot { min-height: 44px; margin-bottom: 10px; }
 .apple-pay-native-btn {
   width: 100%; background: #000; color: #FFF; border: none;
-  border-radius: 8px; padding: 13px; font-size: 1.05rem; font-weight: 600;
+  border-radius: 8px; padding: 10px; font-size: 1rem; font-weight: 600;
   font-family: -apple-system, 'SF Pro Text', 'Barlow', sans-serif;
   -webkit-appearance: none; appearance: none;
 }
