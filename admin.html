@@ -162,10 +162,18 @@
 
     // ---- Menu availability ----
     let menuStatusCache = {};
+    let pendingMenuUpdates = {}; // itemId -> {status, note} optimistically set but not yet confirmed
 
     async function refreshMenuStatus() {
       try {
-        menuStatusCache = await fetchMenuStatus();
+        const fresh = await fetchMenuStatus();
+        // Don't let a background poll overwrite a change we just made
+        // and haven't confirmed yet — keep showing our version until
+        // the save is actually done.
+        Object.keys(pendingMenuUpdates).forEach(id => {
+          fresh[id] = pendingMenuUpdates[id];
+        });
+        menuStatusCache = fresh;
         renderMenuStatusList();
       } catch (err) {
         console.error('Menu status refresh failed', err);
@@ -202,15 +210,24 @@
       const noteInput = document.querySelector(`input[data-note-id="${itemId}"]`);
       const note = noteInput ? noteInput.value.trim() : '';
 
-      btn.disabled = true;
+      const previous = menuStatusCache[itemId] || { status: 'normal', note: '' };
+      const optimistic = { status, note, updatedAt: new Date().toISOString() };
+
+      // Update instantly — no waiting on the network round-trip — and
+      // mark it pending so the background poll can't revert it out from
+      // under you while the save is still in flight.
+      pendingMenuUpdates[itemId] = optimistic;
+      menuStatusCache[itemId] = optimistic;
+      renderMenuStatusList();
+
       try {
         await setMenuStatus(itemId, status, note);
-        menuStatusCache[itemId] = { status, note };
-        renderMenuStatusList();
+        delete pendingMenuUpdates[itemId]; // confirmed — safe for polling to take over again
       } catch (err) {
+        delete pendingMenuUpdates[itemId];
+        menuStatusCache[itemId] = previous;
+        renderMenuStatusList();
         alert('Could not update — please try again.');
-      } finally {
-        btn.disabled = false;
       }
     });
 
@@ -220,10 +237,16 @@
       if (!input) return;
       const itemId = input.dataset.noteId;
       const current = (menuStatusCache[itemId] && menuStatusCache[itemId].status) || 'normal';
+      const optimistic = { status: current, note: input.value.trim(), updatedAt: new Date().toISOString() };
+
+      pendingMenuUpdates[itemId] = optimistic;
+      menuStatusCache[itemId] = optimistic;
+
       try {
         await setMenuStatus(itemId, current, input.value.trim());
-        menuStatusCache[itemId] = { status: current, note: input.value.trim() };
+        delete pendingMenuUpdates[itemId];
       } catch (err) {
+        delete pendingMenuUpdates[itemId];
         alert('Could not save note — please try again.');
       }
     });
