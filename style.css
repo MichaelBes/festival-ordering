@@ -92,8 +92,8 @@ h1, h2, h3, .display {
   margin: 0 0 8px;
 }
 .flyer-image {
-  width: 100%; max-height: 320px; object-fit: cover; object-position: top;
-  border-radius: 14px; margin-bottom: 20px; display: block;
+  width: 100%; max-height: 130px; object-fit: cover; object-position: top;
+  border-radius: 12px; margin-bottom: 16px; display: block;
 }
 .welcome-card .tagline {
   color: var(--cream-dim);
