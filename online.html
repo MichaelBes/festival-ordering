@@ -97,7 +97,6 @@
         <div id="apple-pay-button" class="wallet-btn-slot" style="display:none;"></div>
         <div id="google-pay-button" class="wallet-btn-slot" style="display:none;"></div>
       </div>
-      <div id="walletDebug" style="font-size:0.7rem; color:var(--cream-dim); text-align:center; margin-bottom:8px;"></div>
       <button class="payment-divider" id="paymentDivider" type="button" style="display:none;">or pay by card</button>
 
       <div id="cardSection" style="display:none;">
@@ -152,14 +151,6 @@
     // gracefully just stays hidden if the device/browser doesn't support
     // it — e.g. Apple Pay only shows on Safari, and even there only if
     // the domain has been verified in the Square Dashboard.
-    // TEMPORARY — shows the real reason a wallet button failed to appear,
-    // so we can diagnose it instead of guessing. Safe to remove once
-    // Apple Pay / Google Pay are confirmed working.
-    function appendWalletDebug(msg) {
-      const el = document.getElementById('walletDebug');
-      el.textContent = el.textContent ? el.textContent + ' | ' + msg : msg;
-    }
-
     async function setupWalletButtons(amount) {
       const appleContainer = document.getElementById('apple-pay-button');
       const googleContainer = document.getElementById('google-pay-button');
@@ -169,11 +160,9 @@
       googleContainer.innerHTML = '';
       applePayInstance = null;
       googlePayInstance = null;
-      document.getElementById('walletDebug').textContent = '';
 
       if (!payments) {
         document.getElementById('paymentDivider').style.display = 'none';
-        appendWalletDebug('Square payments object never initialized — check Application ID / Location ID in config.js');
         return;
       }
 
@@ -188,7 +177,6 @@
         appleContainer.style.display = 'block';
       } catch (e) {
         applePayInstance = null;
-        appendWalletDebug('Apple Pay: ' + (e && e.message ? e.message : e));
       }
 
       try {
@@ -197,7 +185,6 @@
         googleContainer.style.display = 'block';
       } catch (e) {
         googlePayInstance = null;
-        appendWalletDebug('Google Pay: ' + (e && e.message ? e.message : e));
       }
 
       const hasWallet = !!(applePayInstance || googlePayInstance);
