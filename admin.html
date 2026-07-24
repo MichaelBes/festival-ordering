@@ -221,13 +221,14 @@
       renderMenuStatusList();
 
       try {
-        await setMenuStatus(itemId, status, note);
+        const result = await setMenuStatus(itemId, status, note);
+        if (!result.success) throw new Error(result.error || 'Save failed');
         delete pendingMenuUpdates[itemId]; // confirmed — safe for polling to take over again
       } catch (err) {
         delete pendingMenuUpdates[itemId];
         menuStatusCache[itemId] = previous;
         renderMenuStatusList();
-        alert('Could not update — please try again.');
+        alert('Could not update — ' + err.message);
       }
     });
 
@@ -243,11 +244,12 @@
       menuStatusCache[itemId] = optimistic;
 
       try {
-        await setMenuStatus(itemId, current, input.value.trim());
+        const result = await setMenuStatus(itemId, current, input.value.trim());
+        if (!result.success) throw new Error(result.error || 'Save failed');
         delete pendingMenuUpdates[itemId];
       } catch (err) {
         delete pendingMenuUpdates[itemId];
-        alert('Could not save note — please try again.');
+        alert('Could not save note — ' + err.message);
       }
     });
 
