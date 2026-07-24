@@ -45,7 +45,7 @@
             <span class="status-pill ${o.status}">${STATUS_LABEL[o.status] || o.status}</span>
           </div>
           <ul class="order-items-list">
-            ${items.map(i => `<li>${i.qty}× ${i.name}</li>`).join('')}
+            ${items.map(i => `<li>${i.qty}× ${i.name}${i.options ? ` <span class="order-tag">${i.options}</span>` : ''}</li>`).join('')}
           </ul>
           <div class="history-meta">${time} · $${o.total} · ${o.paymentMethod === 'cash' ? 'Cash' : 'Card'} · Station ${o.station}</div>
         </div>

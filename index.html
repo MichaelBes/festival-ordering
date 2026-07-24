@@ -44,6 +44,16 @@
     </div>
   </div>
 
+  <!-- Item customization modal -->
+  <div class="modal-backdrop" id="customizeModal" style="display:none;">
+    <div class="modal">
+      <h2 id="customizeTitle">Item Name</h2>
+      <div id="customizeGroups"></div>
+      <button class="checkout-btn" id="customizeAddBtn" style="margin-top:16px;">Add to Order</button>
+      <div class="cancel-link" id="customizeCancel">Cancel</div>
+    </div>
+  </div>
+
   <!-- Payment method modal -->
   <div class="modal-backdrop" id="payModal" style="display:none;">
     <div class="modal">
@@ -116,8 +126,10 @@
     const station = getStation();
     document.getElementById('stationLabel').textContent = 'Station ' + station;
 
-    let cart = {}; // id -> qty
+    let cart = []; // [{ lineId, itemId, name, price, qty, kitchen, optionsText }]
     let customerName = '';
+    let customizingItem = null; // the MENU item currently open in the customize modal
+    let customizeSelections = []; // chosen choice index per option group, for the open modal
 
     // ---- Welcome screen ----
     const nameInput = document.getElementById('customerNameWelcome');
@@ -136,6 +148,14 @@
     });
 
     // ---- Menu ----
+    function simpleQty(itemId) {
+      const line = cart.find(l => l.itemId === itemId && l.optionsText === '');
+      return line ? line.qty : 0;
+    }
+    function totalQty(itemId) {
+      return cart.filter(l => l.itemId === itemId).reduce((sum, l) => sum + l.qty, 0);
+    }
+
     function renderMenu() {
       const wrap = document.getElementById('menuScroll');
       const categories = [...new Set(MENU.map(m => m.category))];
@@ -149,11 +169,16 @@
               ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
               <div class="item-price">$${item.price}</div>
               <div class="item-controls">
-                <div class="stepper">
-                  <button data-action="dec" data-id="${item.id}">–</button>
-                  <span class="count" id="count-${item.id}">${cart[item.id] || 0}</span>
-                  <button data-action="inc" data-id="${item.id}">+</button>
-                </div>
+                ${item.options && item.options.length
+                  ? `<button class="add-btn" data-customize-id="${item.id}">
+                       Customize & Add${totalQty(item.id) > 0 ? ` <span class="item-badge">${totalQty(item.id)}</span>` : ''}
+                     </button>`
+                  : `<div class="stepper">
+                       <button data-action="dec" data-id="${item.id}">–</button>
+                       <span class="count" id="count-${item.id}">${simpleQty(item.id)}</span>
+                       <button data-action="inc" data-id="${item.id}">+</button>
+                     </div>`
+                }
               </div>
             </div>
           `).join('')}
@@ -162,57 +187,130 @@
     }
 
     function renderCart() {
-      const lines = Object.entries(cart).filter(([id, qty]) => qty > 0);
       const cartLinesEl = document.getElementById('cartLines');
       const checkoutBtn = document.getElementById('checkoutBtn');
 
-      if (lines.length === 0) {
+      if (cart.length === 0) {
         cartLinesEl.innerHTML = '<div class="cart-empty">Tap items to add them</div>';
         checkoutBtn.disabled = true;
       } else {
-        cartLinesEl.innerHTML = lines.map(([id, qty]) => {
-          const item = MENU.find(m => m.id === id);
-          return `<div class="cart-line">
-            <span><span class="qty">${qty}×</span>${item.name}</span>
-            <span>$${item.price * qty}</span>
-          </div>`;
-        }).join('');
+        cartLinesEl.innerHTML = cart.map(line => `
+          <div class="cart-line">
+            <span>
+              <span class="qty">${line.qty}×</span>${line.name}
+              ${line.optionsText ? `<div class="cart-line-options">${line.optionsText}</div>` : ''}
+            </span>
+            <span class="cart-line-right">
+              $${line.price * line.qty}
+              <button class="cart-line-remove" data-remove="${line.lineId}">✕</button>
+            </span>
+          </div>
+        `).join('');
         checkoutBtn.disabled = false;
       }
 
-      const total = lines.reduce((sum, [id, qty]) => {
-        const item = MENU.find(m => m.id === id);
-        return sum + item.price * qty;
-      }, 0);
-      document.getElementById('cartTotal').textContent = '$' + total;
+      document.getElementById('cartTotal').textContent = '$' + cartTotal();
     }
 
+    // Simple items (no customization): grid stepper adds/removes directly.
     document.getElementById('menuScroll').addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-action]');
+      const stepBtn = e.target.closest('button[data-action]');
+      if (stepBtn) {
+        const id = stepBtn.dataset.id;
+        const item = MENU.find(m => m.id === id);
+        let line = cart.find(l => l.itemId === id && l.optionsText === '');
+        if (stepBtn.dataset.action === 'inc') {
+          if (line) line.qty += 1;
+          else cart.push({ lineId: 'l' + Date.now() + Math.random(), itemId: id, name: item.name, price: item.price, qty: 1, kitchen: item.kitchen, optionsText: '' });
+        } else if (line) {
+          line.qty -= 1;
+          if (line.qty <= 0) cart = cart.filter(l => l !== line);
+        }
+        renderMenu();
+        renderCart();
+        return;
+      }
+      const customizeBtn = e.target.closest('button[data-customize-id]');
+      if (customizeBtn) openCustomizeModal(customizeBtn.dataset.customizeId);
+    });
+
+    // Cart panel: remove a line entirely (works for both simple and customized lines).
+    document.getElementById('cartLines').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-remove]');
       if (!btn) return;
-      const id = btn.dataset.id;
-      const cur = cart[id] || 0;
-      if (btn.dataset.action === 'inc') cart[id] = cur + 1;
-      if (btn.dataset.action === 'dec') cart[id] = Math.max(0, cur - 1);
-      document.getElementById('count-' + id).textContent = cart[id] || 0;
+      cart = cart.filter(l => l.lineId !== btn.dataset.remove);
+      renderMenu();
+      renderCart();
+    });
+
+    // ---- Customization modal ----
+    function openCustomizeModal(itemId) {
+      customizingItem = MENU.find(m => m.id === itemId);
+      customizeSelections = customizingItem.options.map(g => g.default);
+      renderCustomizeModal();
+      document.getElementById('customizeModal').style.display = 'flex';
+    }
+
+    function renderCustomizeModal() {
+      document.getElementById('customizeTitle').textContent = customizingItem.name;
+      document.getElementById('customizeGroups').innerHTML = customizingItem.options.map((group, gi) => `
+        <div class="option-group">
+          <div class="option-group-label">${group.name}</div>
+          <div class="option-choices">
+            ${group.choices.map((choice, ci) => `
+              <button class="option-choice-btn ${customizeSelections[gi] === ci ? 'selected' : ''}"
+                      data-group="${gi}" data-choice="${ci}">${choice}</button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('customizeGroups').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-group]');
+      if (!btn) return;
+      customizeSelections[Number(btn.dataset.group)] = Number(btn.dataset.choice);
+      renderCustomizeModal();
+    });
+
+    document.getElementById('customizeCancel').addEventListener('click', () => {
+      document.getElementById('customizeModal').style.display = 'none';
+    });
+
+    document.getElementById('customizeAddBtn').addEventListener('click', () => {
+      // Only note choices that differ from the standard/default option —
+      // keeps the kitchen ticket clean when nothing's been changed.
+      const notes = customizingItem.options
+        .map((group, gi) => (customizeSelections[gi] !== group.default ? group.choices[customizeSelections[gi]] : null))
+        .filter(Boolean);
+      const optionsText = notes.join(', ');
+
+      let line = cart.find(l => l.itemId === customizingItem.id && l.optionsText === optionsText);
+      if (line) {
+        line.qty += 1;
+      } else {
+        cart.push({
+          lineId: 'l' + Date.now() + Math.random(), itemId: customizingItem.id, name: customizingItem.name,
+          price: customizingItem.price, qty: 1, kitchen: customizingItem.kitchen, optionsText,
+        });
+      }
+      document.getElementById('customizeModal').style.display = 'none';
+      renderMenu();
       renderCart();
     });
 
     function cartTotal() {
-      return Object.entries(cart).filter(([id, qty]) => qty > 0)
-        .reduce((sum, [id, qty]) => sum + MENU.find(m => m.id === id).price * qty, 0);
+      return cart.reduce((sum, l) => sum + l.price * l.qty, 0);
     }
 
     function currentItems() {
-      return Object.entries(cart).filter(([id, qty]) => qty > 0)
-        .map(([id, qty]) => {
-          const item = MENU.find(m => m.id === id);
-          return { id, name: item.name, qty, price: item.price, kitchen: item.kitchen };
-        });
+      return cart.map(l => ({
+        id: l.itemId, name: l.name, qty: l.qty, price: l.price, kitchen: l.kitchen, options: l.optionsText,
+      }));
     }
 
     function hideAllModals() {
-      ['payModal', 'cashConfirmModal', 'paymentPendingModal', 'confirmModal'].forEach(id => {
+      ['payModal', 'cashConfirmModal', 'paymentPendingModal', 'confirmModal', 'customizeModal'].forEach(id => {
         document.getElementById(id).style.display = 'none';
       });
     }
@@ -356,7 +454,7 @@
       setTimeout(() => {
         hideAllModals();
         // Reset everything for the next customer, back to the welcome screen.
-        cart = {};
+        cart = [];
         customerName = '';
         nameInput.value = '';
         continueBtn.disabled = true;

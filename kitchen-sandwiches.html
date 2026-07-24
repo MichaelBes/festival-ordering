@@ -71,7 +71,7 @@
             <span class="order-elapsed">${timeAgo(o.timestamp)}</span>
           </div>
           <ul class="order-items-list">
-            ${myItems.map(i => `<li>${i.qty}× ${i.name}</li>`).join('')}
+            ${myItems.map(i => `<li>${i.qty}× ${i.name}${i.options ? ` <span class="order-tag">${i.options}</span>` : ''}</li>`).join('')}
           </ul>
           <div class="order-actions">
             <button class="btn-start" data-id="${o.orderId}">Start Order</button>

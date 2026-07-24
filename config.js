@@ -4,7 +4,7 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // Your menu. id must be unique. price is in dollars.
 // "kitchen" tells the system which prep screen this item shows up on:
@@ -16,12 +16,27 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBb
 // check prices/items are still current, since a couple of things
 // (like the Chicken and Kofta Plates, and possibly new shawarma
 // bowls) were mentioned as not finalized yet. Add/edit freely below.
+//
+// FUTURE IDEA (not built yet, per your note): show "image"/"description"
+// only on an online-ordering page, and hide them on the in-person
+// station pages to save space there. Leaving both pages using the
+// same MENU list for now — flag this again when you're ready and we
+// can split it.
+//
+// "options" (optional): lets a customer customize an item before it's
+// added to the cart. Each group has a "name", a list of "choices", and
+// a "default" index (the standard choice — picking it won't add any
+// note to the kitchen ticket; picking anything else will).
 const MENU = [
   // ---- Combos ----
   {
     id: "combo-1", name: "Combo #1", price: 20, category: "Combos", kitchen: "main",
     image: "images/combo-1.webp",
-    description: "Choice of rice or macaroni, 3 kofta, 2 pieces of chicken, 6 mashi (stuffed grape leaves), 1 galash pastry, side salad, and a dessert. Not all items shown in photo.",
+    description: "Choice of rice or macaroni, 3 kofta, 2 pieces of chicken, 6 mashi (stuffed grape leaves), 1 goulash pastry, side salad, and a dessert. Not all items shown in photo.",
+    options: [
+      { name: "Meat", default: 0, choices: ["Kofta & Chicken (standard)", "All Kofta", "All Chicken"] },
+      { name: "Starch", default: 0, choices: ["Rice (standard)", "Macaroni B\u00e9chamel"] },
+    ],
   },
   // Chicken Plate ($15) and Kofta Plate ($15) — add once you have
   // descriptions/photos for these. Example row:
@@ -32,6 +47,9 @@ const MENU = [
     id: "chicken-shawarma-sandwich", name: "Chicken Shawarma Sandwich", price: 10, category: "Sandwiches", kitchen: "sandwich",
     image: "images/chicken-shawarma-sandwich.webp",
     description: "Roasted, thin-sliced chicken with tomato, parsley, and onion, topped with yogurt sauce and tahini, wrapped in pita.",
+    options: [
+      { name: "Spice Level", default: 0, choices: ["Regular (standard)", "Spicy"] },
+    ],
   },
   {
     id: "kofta-sandwich", name: "Kofta Sandwich", price: 8, category: "Sandwiches", kitchen: "sandwich",
@@ -47,6 +65,9 @@ const MENU = [
     id: "beef-shawarma-sandwich", name: "Beef Shawarma Sandwich", price: 12, category: "Sandwiches", kitchen: "sandwich",
     image: "images/beef-shawarma-sandwich.webp",
     description: "Roasted, thin-sliced beef with tomato, parsley, and onion, topped with yogurt sauce and lemon-tahini sauce, wrapped in pita.",
+    options: [
+      { name: "Spice Level", default: 0, choices: ["Regular (standard)", "Spicy"] },
+    ],
   },
 
   // ---- Sides ----
