@@ -35,6 +35,11 @@
       <div class="col-heading" style="margin-top:22px;">Needs Attention</div>
       <div id="flaggedList"></div>
 
+      <div class="col-heading" style="margin-top:22px;">Sales & Popular Items</div>
+      <div class="stat-grid" id="salesGrid"></div>
+      <div id="topItemsList" style="margin-top:12px;"></div>
+      <div id="byStationList" style="margin-top:12px;"></div>
+
       <div class="col-heading" style="margin-top:22px;">Menu Availability</div>
       <div id="menuStatusList"></div>
     </div>
@@ -70,8 +75,59 @@
         const stats = await fetchStats();
         renderStats(stats);
         renderFlagged(stats.flagged);
+        renderSales(stats);
       } catch (err) {
         console.error('Stats refresh failed', err);
+      }
+    }
+
+    function renderSales(stats) {
+      const boxes = [
+        { label: 'Total Sales', value: '$' + stats.totalSalesToday.toFixed(2) },
+        { label: 'Cash', value: '$' + (stats.salesByPayment.cash || 0).toFixed(2) },
+        { label: 'Card', value: '$' + (stats.salesByPayment.card || 0).toFixed(2) },
+      ];
+      document.getElementById('salesGrid').innerHTML = boxes.map(b => `
+        <div class="stat-box">
+          <div class="stat-value">${b.value}</div>
+          <div class="stat-label">${b.label}</div>
+        </div>
+      `).join('');
+
+      const topEl = document.getElementById('topItemsList');
+      if (!stats.topItems || stats.topItems.length === 0) {
+        topEl.innerHTML = '<div class="empty-state">No sales yet today</div>';
+      } else {
+        topEl.innerHTML = `
+          <div class="menu-status-name" style="margin-bottom:8px;">Top Items Today</div>
+          ${stats.topItems.map((item, i) => `
+            <div class="pickup-row">
+              <div class="pickup-row-left">
+                <span class="pickup-order-id">#${i + 1}</span>
+                <span class="pickup-name">${item.name}</span>
+              </div>
+              <span class="status-pill in_progress">${item.qty} sold</span>
+            </div>
+          `).join('')}
+        `;
+      }
+
+      const stationEl = document.getElementById('byStationList');
+      const stationEntries = Object.entries(stats.byStation || {});
+      if (stationEntries.length === 0) {
+        stationEl.innerHTML = '';
+      } else {
+        stationEl.innerHTML = `
+          <div class="menu-status-name" style="margin-bottom:8px;">By Station</div>
+          ${stationEntries.map(([station, data]) => `
+            <div class="pickup-row">
+              <div class="pickup-row-left">
+                <span class="pickup-name">${station === 'online' ? 'Online Orders' : 'Station ' + station}</span>
+              </div>
+              <span class="status-pill ready">${data.count} orders — $${data.sales.toFixed(2)}</span>
+            </div>
+          `).join('')}
+        `;
       }
     }
 

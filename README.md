@@ -123,6 +123,21 @@ to check on how the event is running and control menu availability live.
   updates the order page within about 15 seconds — out-of-stock items
   can't be added to a cart, long-wait items show a small warning but
   can still be ordered.
+- **Sales & Popular Items** — running total sales, cash vs. card
+  split, top-selling items, and a breakdown by station (this will
+  include an "Online Orders" row automatically if/when that gets built).
+
+**How out-of-stock and long-wait actually get enforced:** rather than
+force-refreshing anyone's screen (which would wipe an in-progress
+cart), the order page re-checks live status the moment **Checkout**
+is tapped — not the slightly-stale cached version from its regular
+15-second poll. If anything in the cart just went out of stock,
+checkout is blocked with a list of what to remove, but the rest of
+the cart is untouched. If something just became long-wait *after*
+this customer/volunteer started building the order, they get a
+one-time warning they can continue past. If it was already
+long-wait when they started browsing, they've already seen the tag
+on the menu, so there's no repeat warning.
 
 This passcode is a basic deterrent, not real security — treat it like
 a "staff only" sign, not a lock. Don't put anything truly sensitive
