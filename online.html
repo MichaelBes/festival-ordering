@@ -22,8 +22,8 @@
       <div class="tagline">Enter your name to start your order</div>
       <label for="customerNameWelcome">Your name</label>
       <input type="text" id="customerNameWelcome" placeholder="e.g. Mina" maxlength="30" autocomplete="off">
-      <label for="customerPhoneWelcome" style="margin-top:14px;">Phone number (optional)</label>
-      <input type="tel" id="customerPhoneWelcome" placeholder="For order updates, if enabled" maxlength="20" autocomplete="off">
+      <label for="customerPhoneWelcome" style="margin-top:14px;">Phone number</label>
+      <input type="tel" id="customerPhoneWelcome" placeholder="For order updates" maxlength="20" autocomplete="off">
       <div class="sms-consent-text">By providing your number, you agree to receive SMS order updates. Msg &amp; data rates may apply. Reply STOP to opt out. <a href="privacy.html">Privacy Policy</a></div>
       <button class="continue-btn" id="continueBtn" disabled>Continue to Menu</button>
     </div>
@@ -249,9 +249,14 @@
     const phoneInput = document.getElementById('customerPhoneWelcome');
     const continueBtn = document.getElementById('continueBtn');
 
-    nameInput.addEventListener('input', () => {
-      continueBtn.disabled = nameInput.value.trim().length === 0;
-    });
+    function validateWelcomeForm() {
+      const hasName = nameInput.value.trim().length > 0;
+      const phoneDigits = phoneInput.value.replace(/\D/g, '');
+      const hasValidPhone = phoneDigits.length >= 10;
+      continueBtn.disabled = !(hasName && hasValidPhone);
+    }
+    nameInput.addEventListener('input', validateWelcomeForm);
+    phoneInput.addEventListener('input', validateWelcomeForm);
     nameInput.focus();
 
     continueBtn.addEventListener('click', () => {

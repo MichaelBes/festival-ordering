@@ -54,7 +54,7 @@ async function getFromBackend(params) {
   return res.json();
 }
 
-async function submitOrder({ station, items, total, paymentMethod, customerName }) {
+async function submitOrder({ station, items, total, paymentMethod, customerName, phone }) {
   return postToBackend({
     action: "submitOrder",
     station,
@@ -62,6 +62,7 @@ async function submitOrder({ station, items, total, paymentMethod, customerName 
     total,
     paymentMethod,
     customerName: customerName || "",
+    phone: phone || "",
   });
 }
 

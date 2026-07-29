@@ -21,6 +21,9 @@
       <div class="tagline">Enter your name to start your order</div>
       <label for="customerNameWelcome">Your name</label>
       <input type="text" id="customerNameWelcome" placeholder="e.g. Mina" maxlength="30" autocomplete="off">
+      <label for="customerPhoneWelcome" style="margin-top:14px;">Phone number (optional)</label>
+      <input type="tel" id="customerPhoneWelcome" placeholder="For order updates, if enabled" maxlength="20" autocomplete="off">
+      <div class="sms-consent-text">If provided, we'll text order updates to this number. Msg &amp; data rates may apply. Reply STOP to opt out.</div>
       <button class="continue-btn" id="continueBtn" disabled>Continue to Menu</button>
     </div>
   </div>
@@ -149,6 +152,7 @@
 
     let cart = []; // [{ lineId, itemId, name, price, qty, kitchen, optionsText }]
     let customerName = '';
+    let customerPhone = '';
     let customizingItem = null; // the MENU item currently open in the customize modal
     let customizeSelections = []; // chosen choice index per option group, for the open modal
     let menuStatus = {}; // itemId -> { status, note, updatedAt }, refreshed periodically
@@ -165,6 +169,7 @@
 
     // ---- Welcome screen ----
     const nameInput = document.getElementById('customerNameWelcome');
+    const phoneInput = document.getElementById('customerPhoneWelcome');
     const continueBtn = document.getElementById('continueBtn');
 
     nameInput.addEventListener('input', () => {
@@ -174,6 +179,7 @@
 
     continueBtn.addEventListener('click', () => {
       customerName = nameInput.value.trim();
+      customerPhone = normalizePhoneNumber(phoneInput.value);
       orderStartTime = Date.now();
       document.getElementById('orderingForLabel').textContent = 'Ordering for: ' + customerName;
       document.getElementById('welcomeScreen').style.display = 'none';
@@ -493,7 +499,7 @@
       try {
         const result = await submitOrder({
           station, items: currentItems(), total: cartTotal(),
-          paymentMethod: 'cash', customerName,
+          paymentMethod: 'cash', customerName, phone: customerPhone,
         });
         document.getElementById('cashConfirmModal').style.display = 'none';
         showConfirmation(result.orderId);
@@ -518,7 +524,7 @@
       try {
         const result = await submitOrder({
           station, items: currentItems(), total: cartTotal(),
-          paymentMethod: 'card', customerName,
+          paymentMethod: 'card', customerName, phone: customerPhone,
         });
         pendingOrderId = result.orderId;
         pollPaymentStatus();
@@ -569,7 +575,9 @@
         // Reset everything for the next customer, back to the welcome screen.
         cart = [];
         customerName = '';
+        customerPhone = '';
         nameInput.value = '';
+        phoneInput.value = '';
         continueBtn.disabled = true;
         document.getElementById('orderScreen').style.display = 'none';
         document.getElementById('welcomeScreen').style.display = 'flex';
