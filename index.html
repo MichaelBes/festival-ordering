@@ -2,48 +2,56 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>St. George Festival — Order</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Order Online — St. George Egyptian Festival</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link rel="stylesheet" href="style.css">
+<script src="https://web.squarecdn.com/v1/square.js"></script>
 </head>
 <body>
+  <div class="glow-bar"></div>
   <div class="topbar">
     <h1>St. George Egyptian Festival</h1>
-    <div class="subtitle" id="stationLabel">Station 1</div>
+    <div class="subtitle">Order Online</div>
   </div>
 
-  <!-- Welcome / name-capture screen, shown first -->
+
+  <!-- Welcome / name-capture screen -->
   <div class="welcome-wrap" id="welcomeScreen">
     <div class="welcome-card">
       <h1>Welcome!</h1>
       <div class="tagline">Enter your name to start your order</div>
       <label for="customerNameWelcome">Your name</label>
       <input type="text" id="customerNameWelcome" placeholder="e.g. Mina" maxlength="30" autocomplete="off">
-      <label for="customerPhoneWelcome" style="margin-top:14px;">Phone number (optional)</label>
-      <input type="tel" id="customerPhoneWelcome" placeholder="For order updates, if enabled" maxlength="20" autocomplete="off">
-      <div class="sms-consent-text">If provided, we'll text order updates to this number. Msg &amp; data rates may apply. Reply STOP to opt out.</div>
+      <label for="customerPhoneWelcome" style="margin-top:14px;">Phone number</label>
+      <input type="tel" id="customerPhoneWelcome" placeholder="For order updates" maxlength="20" autocomplete="off">
+      <div class="sms-consent-text">By providing your number, you agree to receive SMS order updates. Msg &amp; data rates may apply. Reply STOP to opt out. <a href="privacy.html">Privacy Policy</a></div>
       <button class="continue-btn" id="continueBtn" disabled>Continue to Menu</button>
     </div>
   </div>
 
-  <!-- Ordering screen, hidden until they continue -->
-  <div class="menu-wrap" id="orderScreen" style="display:none;">
+  <!-- Ordering screen: mobile-first, full-width menu, no side cart panel -->
+  <div class="mobile-menu-wrap" id="orderScreen" style="display:none;">
     <div class="menu-scroll" id="menuScroll"></div>
+  </div>
 
-    <div class="cart-panel">
+  <!-- Sticky bottom cart bar -->
+  <button class="cart-bar" id="cartBar" style="display:none;">
+    <span id="cartBarSummary">0 items</span>
+    <span class="cart-bar-total" id="cartBarTotal">$0</span>
+    <span class="cart-bar-view">View Cart</span>
+  </button>
+
+  <!-- Cart modal -->
+  <div class="modal-backdrop" id="cartModal" style="display:none;">
+    <div class="modal" style="max-width:420px;">
       <h2>Your Order</h2>
-      <div class="ordering-for" id="orderingForLabel">Ordering for: —</div>
-
-      <div class="cart-lines" id="cartLines">
-        <div class="cart-empty">Tap items to add them</div>
-      </div>
+      <div class="cart-lines" id="cartLines" style="max-height:50vh;"></div>
       <div class="cart-total-row">
         <span>Total</span>
         <span id="cartTotal">$0</span>
       </div>
       <button class="checkout-btn" id="checkoutBtn" disabled>Checkout</button>
+      <div class="cancel-link" id="cartCloseBtn">Keep Browsing</div>
     </div>
   </div>
 
@@ -57,7 +65,7 @@
     </div>
   </div>
 
-  <!-- Checkout blocked: something in the cart just went out of stock -->
+  <!-- Checkout blocked: out of stock -->
   <div class="modal-backdrop" id="outOfStockModal" style="display:none;">
     <div class="modal">
       <h2>Sorry, we just ran out</h2>
@@ -67,123 +75,198 @@
     </div>
   </div>
 
-  <!-- Long-wait warning for items that changed status after this order started -->
+  <!-- Long-wait warning -->
   <div class="modal-backdrop" id="longWaitModal" style="display:none;">
     <div class="modal">
       <h2>Heads up — longer wait</h2>
       <p>These items now have a longer wait than usual:</p>
       <ul class="order-items-list" id="longWaitList" style="text-align:left;"></ul>
-      <button class="checkout-btn" id="longWaitContinueBtn">Continue to Checkout</button>
+      <button class="checkout-btn" id="longWaitContinueBtn">Continue to Payment</button>
       <div class="cancel-link" id="longWaitGoBackBtn">Go back and adjust order</div>
     </div>
   </div>
 
-  <!-- Payment method modal -->
-  <div class="modal-backdrop" id="payModal" style="display:none;">
+  <!-- Payment modal: Square card form -->
+  <div class="modal-backdrop" id="paymentModal" style="display:none;">
     <div class="modal">
-      <h2>How would you like to pay?</h2>
-      <div class="pay-options">
-        <button class="pay-btn" id="payCardBtn">💳<br>Card<br><span style="font-weight:400;font-size:0.85rem;">Pay on the terminal</span></button>
-        <button class="pay-btn" id="payCashBtn">💵<br>Cash<br><span style="font-weight:400;font-size:0.85rem;">Pay a volunteer</span></button>
+      <h2>Pay for Your Order</h2>
+      <div class="cash-summary">
+        <div class="cash-summary-row"><span>Order for</span><span id="paymentName">—</span></div>
+        <div class="cash-summary-row total"><span>Total</span><span id="paymentTotal">$0</span></div>
       </div>
-      <div class="cancel-link" id="payCancel">Cancel</div>
+      <div id="walletButtons">
+        <div id="apple-pay-button" class="wallet-btn-slot" style="display:none;"></div>
+        <div id="google-pay-button" class="wallet-btn-slot" style="display:none;"></div>
+      </div>
+      <button class="payment-divider" id="paymentDivider" type="button" style="display:none;">or pay by card</button>
+
+      <div id="cardSection" style="display:none;">
+        <div id="card-container" style="margin:16px 0;"></div>
+        <button class="checkout-btn" id="payNowBtn">Pay Now</button>
+      </div>
+      <p id="paymentError" style="color:var(--danger); display:none; margin-top:10px; font-size:0.9rem;"></p>
+      <div class="cancel-link" id="paymentCancelBtn">Cancel</div>
     </div>
   </div>
 
-  <!-- Cash: volunteer must confirm before the order is sent -->
-  <div class="modal-backdrop" id="cashConfirmModal" style="display:none;">
-    <div class="modal">
-      <div id="cashKeypadState">
-        <div class="flip-icon">🔄📱</div>
-        <h2>Turn the iPad to a volunteer</h2>
-        <div class="cash-summary">
-          <div class="cash-summary-row"><span>Order for</span><span id="cashConfirmName">—</span></div>
-          <div class="cash-summary-row total"><span>Collect</span><span id="cashConfirmTotal">$0</span></div>
-        </div>
-        <p>Volunteer: enter the passcode once cash is received.</p>
-        <div class="passcode-dots" id="passcodeDots">
-          <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
-        </div>
-        <div class="keypad" id="cashKeypad">
-          <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button>
-          <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button>
-          <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button>
-          <button data-key="clear" class="keypad-back">Clear</button><button data-key="0">0</button><button data-key="back" class="keypad-back">⌫</button>
-        </div>
-        <div class="cancel-link" id="cashCancel">Cancel</div>
-      </div>
-      <div id="cashSendingState" style="display:none;">
-        <h2>Sending order...</h2>
-        <div class="spinner"></div>
-        <p>One moment.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Card: waiting on the terminal -->
-  <div class="modal-backdrop" id="paymentPendingModal" style="display:none;">
-    <div class="modal">
-      <h2>Pay on the Terminal</h2>
-      <div class="spinner"></div>
-      <p>Follow the prompts on the card reader next to you. This will update automatically once payment is complete.</p>
-      <div id="paymentFailedBox" style="display:none;">
-        <p style="color:var(--danger);font-weight:600;">Payment didn't go through.</p>
-        <button class="retry-btn" id="retryPaymentBtn">Try Again</button>
-        <div class="cancel-link" id="paymentCancelBtn">Cancel order</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Confirmation modal -->
+  <!-- Confirmation -->
   <div class="modal-backdrop" id="confirmModal" style="display:none;">
     <div class="modal">
-      <h2 id="confirmHeading">Order placed!</h2>
+      <h2>Order placed!</h2>
       <div class="confirm-name-big" id="confirmName">Mina</div>
-      <div class="confirm-order-id" id="confirmOrderId">Order #S1-001</div>
-      <p id="confirmBody">We'll call your number when it's ready.</p>
+      <div class="confirm-order-id" id="confirmOrderId">Order #ONL-001</div>
+      <p>We'll have it ready as soon as possible. Keep this order number handy.</p>
+      <button class="checkout-btn" id="confirmNewOrderBtn">Start a New Order</button>
     </div>
   </div>
 
   <script src="config.js"></script>
   <script src="api.js"></script>
   <script>
-    const station = getStation();
-    document.getElementById('stationLabel').textContent = 'Station ' + station;
-
-    let cart = []; // [{ lineId, itemId, name, price, qty, kitchen, optionsText }]
+    let cart = [];
     let customerName = '';
     let customerPhone = '';
-    let customizingItem = null; // the MENU item currently open in the customize modal
-    let customizeSelections = []; // chosen choice index per option group, for the open modal
-    let menuStatus = {}; // itemId -> { status, note, updatedAt }, refreshed periodically
-    let orderStartTime = null; // when this customer/volunteer started browsing the menu
+    let customizingItem = null;
+    let customizeSelections = [];
+    let menuStatus = {};
+    let orderStartTime = null;
+    let payments, card;
+    let applePayInstance = null;
+    let googlePayInstance = null;
 
-    async function refreshMenuStatus() {
+    // ---- Square Web Payments SDK setup ----
+    async function initializeSquare() {
       try {
-        menuStatus = await fetchMenuStatus();
-        renderMenu();
+        if (!window.Square) { console.error('Square.js did not load'); return; }
+        payments = window.Square.payments(SQUARE_APPLICATION_ID, SQUARE_LOCATION_ID_PUBLIC);
+        card = await payments.card();
+        await card.attach('#card-container');
       } catch (err) {
-        console.error('Menu status refresh failed', err);
+        console.error('Square init failed', err);
       }
     }
+    initializeSquare();
+
+    // Sets up Apple Pay / Google Pay buttons for the CURRENT cart total
+    // (has to be redone each time, since the amount changes). Each wallet
+    // gracefully just stays hidden if the device/browser doesn't support
+    // it — e.g. Apple Pay only shows on Safari, and even there only if
+    // the domain has been verified in the Square Dashboard.
+    async function setupWalletButtons(amount) {
+      const appleContainer = document.getElementById('apple-pay-button');
+      const googleContainer = document.getElementById('google-pay-button');
+      appleContainer.style.display = 'none';
+      googleContainer.style.display = 'none';
+      appleContainer.innerHTML = '';
+      googleContainer.innerHTML = '';
+      applePayInstance = null;
+      googlePayInstance = null;
+
+      if (!payments) {
+        document.getElementById('paymentDivider').style.display = 'none';
+        return;
+      }
+
+      const paymentRequest = payments.paymentRequest({
+        countryCode: 'US', currencyCode: 'USD',
+        total: { amount: amount.toFixed(2), label: 'Total' },
+      });
+
+      try {
+        applePayInstance = await payments.applePay(paymentRequest);
+        appleContainer.innerHTML = '<button type="button" class="apple-pay-native-btn">\uF8FF Pay</button>';
+        appleContainer.style.display = 'block';
+      } catch (e) {
+        applePayInstance = null;
+      }
+
+      try {
+        googlePayInstance = await payments.googlePay(paymentRequest);
+        await googlePayInstance.attach('#google-pay-button', { buttonColor: 'black', buttonType: 'long' });
+        googleContainer.style.display = 'block';
+      } catch (e) {
+        googlePayInstance = null;
+      }
+
+      const hasWallet = !!(applePayInstance || googlePayInstance);
+      document.getElementById('paymentDivider').style.display = hasWallet ? 'block' : 'none';
+      // If a wallet is available, keep the card form tucked behind the
+      // toggle so it doesn't look like the preferred option. If neither
+      // wallet is available on this device, just show card directly —
+      // there's nothing to tuck it behind.
+      document.getElementById('cardSection').style.display = hasWallet ? 'none' : 'block';
+    }
+
+    // Shared by card, Apple Pay, and Google Pay — all three end up with a
+    // token, and from there the rest of the flow is identical.
+    async function processPaymentToken(token) {
+      const errorEl = document.getElementById('paymentError');
+      errorEl.style.display = 'none';
+      const result = await submitOnlineOrder({
+        items: currentItems(), total: cartTotal(), customerName, phone: customerPhone,
+        cardToken: token,
+      });
+      if (!result.success) throw new Error(result.error || 'Payment failed.');
+
+      document.getElementById('paymentModal').style.display = 'none';
+      document.getElementById('confirmName').textContent = customerName;
+      document.getElementById('confirmOrderId').textContent = 'Order #' + result.orderId;
+      document.getElementById('confirmModal').style.display = 'flex';
+    }
+
+    function showPaymentError(message) {
+      const errorEl = document.getElementById('paymentError');
+      errorEl.textContent = message;
+      errorEl.style.display = 'block';
+    }
+
+    // These listen on the wrapper divs (not Square's inner button), so
+    // they keep working even though setupWalletButtons() replaces the
+    // inner content fresh every time the payment screen opens.
+    document.getElementById('apple-pay-button').addEventListener('click', async () => {
+      if (!applePayInstance) return;
+      try {
+        const result = await applePayInstance.tokenize();
+        if (result.status !== 'OK') throw new Error('Apple Pay was cancelled or declined.');
+        await processPaymentToken(result.token);
+      } catch (err) {
+        showPaymentError(err.message);
+      }
+    });
+    document.getElementById('google-pay-button').addEventListener('click', async () => {
+      if (!googlePayInstance) return;
+      try {
+        const result = await googlePayInstance.tokenize();
+        if (result.status !== 'OK') throw new Error('Google Pay was cancelled or declined.');
+        await processPaymentToken(result.token);
+      } catch (err) {
+        showPaymentError(err.message);
+      }
+    });
 
     // ---- Welcome screen ----
     const nameInput = document.getElementById('customerNameWelcome');
     const phoneInput = document.getElementById('customerPhoneWelcome');
     const continueBtn = document.getElementById('continueBtn');
 
-    nameInput.addEventListener('input', () => {
-      continueBtn.disabled = nameInput.value.trim().length === 0;
-    });
+    function validateWelcomeForm() {
+      const hasName = nameInput.value.trim().length > 0;
+      const phoneDigits = phoneInput.value.replace(/\D/g, '');
+      const hasValidPhone = phoneDigits.length >= 10;
+      continueBtn.disabled = !(hasName && hasValidPhone);
+    }
+    nameInput.addEventListener('input', validateWelcomeForm);
+    phoneInput.addEventListener('input', validateWelcomeForm);
     nameInput.focus();
 
     continueBtn.addEventListener('click', () => {
       customerName = nameInput.value.trim();
       customerPhone = normalizePhoneNumber(phoneInput.value);
       orderStartTime = Date.now();
-      document.getElementById('orderingForLabel').textContent = 'Ordering for: ' + customerName;
       document.getElementById('welcomeScreen').style.display = 'none';
-      document.getElementById('orderScreen').style.display = 'grid';
+      document.getElementById('orderScreen').style.display = 'block';
+      refreshMenuStatus();
+      setInterval(refreshMenuStatus, MENU_STATUS_POLL_INTERVAL_MS);
     });
 
     // ---- Menu ----
@@ -232,6 +315,28 @@
       `).join('');
     }
 
+    async function refreshMenuStatus() {
+      try {
+        menuStatus = await fetchMenuStatus();
+        renderMenu();
+      } catch (err) {
+        console.error('Menu status refresh failed', err);
+      }
+    }
+
+    // ---- Cart bar + cart modal ----
+    function renderCartBar() {
+      const bar = document.getElementById('cartBar');
+      const count = cart.reduce((sum, l) => sum + l.qty, 0);
+      if (count === 0) {
+        bar.style.display = 'none';
+        return;
+      }
+      bar.style.display = 'flex';
+      document.getElementById('cartBarSummary').textContent = count + (count === 1 ? ' item' : ' items');
+      document.getElementById('cartBarTotal').textContent = '$' + cartTotal();
+    }
+
     function renderCart() {
       const cartLinesEl = document.getElementById('cartLines');
       const checkoutBtn = document.getElementById('checkoutBtn');
@@ -254,11 +359,26 @@
         `).join('');
         checkoutBtn.disabled = false;
       }
-
       document.getElementById('cartTotal').textContent = '$' + cartTotal();
+      renderCartBar();
     }
 
-    // Simple items (no customization): grid stepper adds/removes directly.
+    document.getElementById('cartBar').addEventListener('click', () => {
+      document.getElementById('cartBar').style.display = 'none';
+      document.getElementById('cartModal').style.display = 'flex';
+    });
+    document.getElementById('cartCloseBtn').addEventListener('click', () => {
+      document.getElementById('cartModal').style.display = 'none';
+      renderCartBar();
+    });
+    document.getElementById('cartLines').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-remove]');
+      if (!btn) return;
+      cart = cart.filter(l => l.lineId !== btn.dataset.remove);
+      renderMenu();
+      renderCart();
+    });
+
     document.getElementById('menuScroll').addEventListener('click', (e) => {
       const stepBtn = e.target.closest('button[data-action]');
       if (stepBtn) {
@@ -280,23 +400,14 @@
       if (customizeBtn) openCustomizeModal(customizeBtn.dataset.customizeId);
     });
 
-    // Cart panel: remove a line entirely (works for both simple and customized lines).
-    document.getElementById('cartLines').addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-remove]');
-      if (!btn) return;
-      cart = cart.filter(l => l.lineId !== btn.dataset.remove);
-      renderMenu();
-      renderCart();
-    });
-
     // ---- Customization modal ----
     function openCustomizeModal(itemId) {
       customizingItem = MENU.find(m => m.id === itemId);
       customizeSelections = customizingItem.options.map(g => g.default);
       renderCustomizeModal();
+      document.getElementById('cartBar').style.display = 'none';
       document.getElementById('customizeModal').style.display = 'flex';
     }
-
     function renderCustomizeModal() {
       document.getElementById('customizeTitle').textContent = customizingItem.name;
       document.getElementById('customizeGroups').innerHTML = customizingItem.options.map((group, gi) => `
@@ -311,26 +422,21 @@
         </div>
       `).join('');
     }
-
     document.getElementById('customizeGroups').addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-group]');
       if (!btn) return;
       customizeSelections[Number(btn.dataset.group)] = Number(btn.dataset.choice);
       renderCustomizeModal();
     });
-
     document.getElementById('customizeCancel').addEventListener('click', () => {
       document.getElementById('customizeModal').style.display = 'none';
+      renderCartBar();
     });
-
     document.getElementById('customizeAddBtn').addEventListener('click', () => {
-      // Only note choices that differ from the standard/default option —
-      // keeps the kitchen ticket clean when nothing's been changed.
       const notes = customizingItem.options
         .map((group, gi) => (customizeSelections[gi] !== group.default ? group.choices[customizeSelections[gi]] : null))
         .filter(Boolean);
       const optionsText = notes.join(', ');
-
       let line = cart.find(l => l.itemId === customizingItem.id && l.optionsText === optionsText);
       if (line) {
         line.qty += 1;
@@ -348,7 +454,6 @@
     function cartTotal() {
       return cart.reduce((sum, l) => sum + l.price * l.qty, 0);
     }
-
     function currentItems() {
       return cart.map(l => ({
         id: l.itemId, name: l.name, qty: l.qty, price: l.price, kitchen: l.kitchen, options: l.optionsText,
@@ -356,11 +461,12 @@
     }
 
     function hideAllModals() {
-      ['payModal', 'cashConfirmModal', 'paymentPendingModal', 'confirmModal', 'customizeModal', 'outOfStockModal', 'longWaitModal'].forEach(id => {
+      ['cartModal', 'customizeModal', 'outOfStockModal', 'longWaitModal', 'paymentModal', 'confirmModal'].forEach(id => {
         document.getElementById(id).style.display = 'none';
       });
     }
 
+    // ---- Checkout: availability check, then payment ----
     document.getElementById('checkoutBtn').addEventListener('click', async () => {
       const checkoutBtn = document.getElementById('checkoutBtn');
       const originalText = checkoutBtn.textContent;
@@ -374,16 +480,10 @@
       }
     });
 
-    // Re-checks every cart item against the LATEST menu status right as
-    // checkout is attempted (not the possibly-15-seconds-stale cached
-    // version), so nothing out of stock can slip through.
     async function runCheckoutAvailabilityCheck() {
       try {
         menuStatus = await fetchMenuStatus();
-      } catch (err) {
-        // If the check itself fails, don't block checkout over a network
-        // hiccup — fall through using whatever we already had cached.
-      }
+      } catch (err) { /* fall through on network hiccup */ }
       renderMenu();
 
       const cartItemIds = [...new Set(cart.map(l => l.itemId))];
@@ -398,9 +498,6 @@
           outOfStock.push(item.name);
         } else if (entry.status === 'long_wait') {
           const changedAt = entry.updatedAt ? new Date(entry.updatedAt).getTime() : 0;
-          // Only warn if it became long-wait AFTER they started this order —
-          // if it was already flagged when they started browsing, they've
-          // already seen the tag on the menu and don't need telling twice.
           if (orderStartTime && changedAt > orderStartTime) {
             newlyLongWait.push(item.name);
           }
@@ -408,189 +505,90 @@
       });
 
       if (outOfStock.length > 0) {
-        showOutOfStockModal(outOfStock);
+        document.getElementById('cartModal').style.display = 'none';
+        document.getElementById('outOfStockList').innerHTML = outOfStock.map(n => `<li>${n}</li>`).join('');
+        document.getElementById('outOfStockModal').style.display = 'flex';
         return;
       }
       if (newlyLongWait.length > 0) {
-        showLongWaitWarningModal(newlyLongWait);
+        document.getElementById('cartModal').style.display = 'none';
+        document.getElementById('longWaitList').innerHTML = newlyLongWait.map(n => `<li>${n}</li>`).join('');
+        document.getElementById('longWaitModal').style.display = 'flex';
         return;
       }
-      document.getElementById('payModal').style.display = 'flex';
-    }
-
-    function showOutOfStockModal(names) {
-      document.getElementById('outOfStockList').innerHTML = names.map(n => `<li>${n}</li>`).join('');
-      document.getElementById('outOfStockModal').style.display = 'flex';
+      openPaymentModal();
     }
     document.getElementById('outOfStockOkBtn').addEventListener('click', () => {
       document.getElementById('outOfStockModal').style.display = 'none';
+      document.getElementById('cartModal').style.display = 'flex';
     });
-
-    function showLongWaitWarningModal(names) {
-      document.getElementById('longWaitList').innerHTML = names.map(n => `<li>${n}</li>`).join('');
-      document.getElementById('longWaitModal').style.display = 'flex';
-    }
     document.getElementById('longWaitGoBackBtn').addEventListener('click', () => {
       document.getElementById('longWaitModal').style.display = 'none';
+      document.getElementById('cartModal').style.display = 'flex';
     });
     document.getElementById('longWaitContinueBtn').addEventListener('click', () => {
       document.getElementById('longWaitModal').style.display = 'none';
-      document.getElementById('payModal').style.display = 'flex';
+      openPaymentModal();
     });
-    document.getElementById('payCancel').addEventListener('click', hideAllModals);
-    document.getElementById('cashCancel').addEventListener('click', hideAllModals);
 
-    // ---- Cash flow: shows total + requires volunteer passcode before sending ----
-    let enteredPasscode = '';
-
-    function renderPasscodeDots(errorState) {
-      const dots = document.querySelectorAll('#passcodeDots .dot');
-      dots.forEach((dot, i) => dot.classList.toggle('filled', i < enteredPasscode.length));
-      document.getElementById('passcodeDots').classList.toggle('error', !!errorState);
+    // ---- Payment ----
+    function openPaymentModal() {
+      document.getElementById('cartModal').style.display = 'none';
+      document.getElementById('paymentName').textContent = customerName;
+      document.getElementById('paymentTotal').textContent = '$' + cartTotal();
+      document.getElementById('paymentError').style.display = 'none';
+      document.getElementById('paymentModal').style.display = 'flex';
+      setupWalletButtons(cartTotal());
     }
-
-    document.getElementById('payCashBtn').addEventListener('click', () => {
-      document.getElementById('payModal').style.display = 'none';
-      document.getElementById('cashConfirmName').textContent = customerName;
-      document.getElementById('cashConfirmTotal').textContent = '$' + cartTotal();
-      enteredPasscode = '';
-      renderPasscodeDots(false);
-      document.getElementById('cashSendingState').style.display = 'none';
-      document.getElementById('cashKeypadState').style.display = 'block';
-      document.getElementById('cashConfirmModal').style.display = 'flex';
-    });
-
-    document.getElementById('cashKeypad').addEventListener('click', async (e) => {
-      const btn = e.target.closest('button[data-key]');
-      if (!btn) return;
-      const key = btn.dataset.key;
-
-      if (key === 'clear') {
-        enteredPasscode = '';
-        renderPasscodeDots(false);
-        return;
-      }
-      if (key === 'back') {
-        enteredPasscode = enteredPasscode.slice(0, -1);
-        renderPasscodeDots(false);
-        return;
-      }
-      if (enteredPasscode.length >= 4) return;
-
-      enteredPasscode += key;
-      renderPasscodeDots(false);
-
-      if (enteredPasscode.length === 4) {
-        if (enteredPasscode === VOLUNTEER_PASSCODE) {
-          await sendCashOrder();
-        } else {
-          renderPasscodeDots(true);
-          setTimeout(() => {
-            enteredPasscode = '';
-            renderPasscodeDots(false);
-          }, 500);
-        }
-      }
-    });
-
-    async function sendCashOrder() {
-      document.getElementById('cashKeypadState').style.display = 'none';
-      document.getElementById('cashSendingState').style.display = 'block';
-      try {
-        const result = await submitOrder({
-          station, items: currentItems(), total: cartTotal(),
-          paymentMethod: 'cash', customerName, phone: customerPhone,
-        });
-        document.getElementById('cashConfirmModal').style.display = 'none';
-        showConfirmation(result.orderId);
-      } catch (err) {
-        alert('Something went wrong sending your order. Please tell a volunteer.\n' + err.message);
-        document.getElementById('cashSendingState').style.display = 'none';
-        document.getElementById('cashKeypadState').style.display = 'block';
-        enteredPasscode = '';
-        renderPasscodeDots(false);
-      }
-    }
-
-    // ---- Card flow: submit immediately, then poll until the terminal reports success ----
-    let paymentPollTimer = null;
-    let pendingOrderId = null;
-
-    document.getElementById('payCardBtn').addEventListener('click', async () => {
-      document.getElementById('payModal').style.display = 'none';
-      document.getElementById('paymentFailedBox').style.display = 'none';
-      document.getElementById('paymentPendingModal').style.display = 'flex';
-
-      try {
-        const result = await submitOrder({
-          station, items: currentItems(), total: cartTotal(),
-          paymentMethod: 'card', customerName, phone: customerPhone,
-        });
-        pendingOrderId = result.orderId;
-        pollPaymentStatus();
-      } catch (err) {
-        alert('Something went wrong starting the order. Please tell a volunteer.\n' + err.message);
-        hideAllModals();
-      }
-    });
-
-    function pollPaymentStatus() {
-      clearTimeout(paymentPollTimer);
-      paymentPollTimer = setTimeout(async () => {
-        try {
-          const status = await checkPaymentStatus(pendingOrderId);
-          if (status.status === 'received') {
-            hideAllModals();
-            showConfirmation(pendingOrderId);
-          } else if (status.status === 'failed') {
-            document.getElementById('paymentFailedBox').style.display = 'block';
-          } else {
-            pollPaymentStatus(); // still waiting
-          }
-        } catch (err) {
-          pollPaymentStatus(); // network hiccup — keep trying
-        }
-      }, PAYMENT_POLL_INTERVAL_MS);
-    }
-
-    document.getElementById('retryPaymentBtn').addEventListener('click', () => {
-      document.getElementById('paymentFailedBox').style.display = 'none';
-      pollPaymentStatus();
-    });
     document.getElementById('paymentCancelBtn').addEventListener('click', () => {
-      clearTimeout(paymentPollTimer);
-      hideAllModals();
+      document.getElementById('paymentModal').style.display = 'none';
+      document.getElementById('cartModal').style.display = 'flex';
     });
 
-    function showConfirmation(orderId) {
-      document.getElementById('confirmName').textContent = customerName;
-      document.getElementById('confirmOrderId').textContent = 'Order #' + orderId;
-      document.getElementById('confirmHeading').textContent = 'Order placed!';
-      document.getElementById('confirmBody').textContent =
-        "We'll call your name and number when it's ready.";
-      document.getElementById('confirmModal').style.display = 'flex';
+    document.getElementById('paymentDivider').addEventListener('click', () => {
+      document.getElementById('cardSection').style.display = 'block';
+      document.getElementById('paymentDivider').style.display = 'none';
+    });
 
-      setTimeout(() => {
-        hideAllModals();
-        // Reset everything for the next customer, back to the welcome screen.
-        cart = [];
-        customerName = '';
-        customerPhone = '';
-        nameInput.value = '';
-        phoneInput.value = '';
-        continueBtn.disabled = true;
-        document.getElementById('orderScreen').style.display = 'none';
-        document.getElementById('welcomeScreen').style.display = 'flex';
-        nameInput.focus();
-        renderMenu();
-        renderCart();
-      }, CONFIRMATION_DISPLAY_MS);
-    }
+    document.getElementById('payNowBtn').addEventListener('click', async () => {
+      const payBtn = document.getElementById('payNowBtn');
+      const errorEl = document.getElementById('paymentError');
+      errorEl.style.display = 'none';
+      payBtn.disabled = true;
+      payBtn.textContent = 'Processing...';
+
+      try {
+        if (!card) throw new Error('Payment form did not load — please refresh and try again.');
+        const tokenResult = await card.tokenize();
+        if (tokenResult.status !== 'OK') {
+          throw new Error((tokenResult.errors && tokenResult.errors[0] && tokenResult.errors[0].message) || 'Card was declined.');
+        }
+        await processPaymentToken(tokenResult.token);
+      } catch (err) {
+        showPaymentError(err.message);
+      } finally {
+        payBtn.disabled = false;
+        payBtn.textContent = 'Pay Now';
+      }
+    });
+
+    document.getElementById('confirmNewOrderBtn').addEventListener('click', () => {
+      cart = [];
+      customerName = '';
+      customerPhone = '';
+      nameInput.value = '';
+      phoneInput.value = '';
+      continueBtn.disabled = true;
+      hideAllModals();
+      document.getElementById('orderScreen').style.display = 'none';
+      document.getElementById('welcomeScreen').style.display = 'flex';
+      nameInput.focus();
+      renderMenu();
+      renderCart();
+    });
 
     renderMenu();
     renderCart();
-    refreshMenuStatus();
-    setInterval(refreshMenuStatus, MENU_STATUS_POLL_INTERVAL_MS);
   </script>
 </body>
 </html>
