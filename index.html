@@ -34,9 +34,12 @@
       <div class="tagline">Enter your name to start your order</div>
       <label for="customerNameWelcome">Your name</label>
       <input type="text" id="customerNameWelcome" placeholder="e.g. Mina" maxlength="30" autocomplete="off">
-      <label for="customerPhoneWelcome" style="margin-top:14px;">Phone number (optional)</label>
-      <input type="tel" id="customerPhoneWelcome" placeholder="For order updates, if provided" maxlength="20" autocomplete="off">
-      <div class="sms-consent-text">By providing your number, you agree to receive SMS order updates. Msg &amp; data rates may apply. Reply STOP to opt out. <a href="privacy.html">Privacy Policy</a></div>
+      <label for="customerPhoneWelcome" style="margin-top:14px;">Phone number</label>
+      <input type="tel" id="customerPhoneWelcome" placeholder="For order updates" maxlength="20" autocomplete="off">
+      <label class="sms-consent-checkbox-label">
+        <input type="checkbox" id="smsConsentCheckbox">
+        <span>Text me updates about my order (optional). Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. <a href="privacy.html">Privacy Policy</a></span>
+      </label>
       <button class="continue-btn" id="continueBtn" disabled>Continue to Menu</button>
     </div>
   </div>
@@ -138,6 +141,7 @@
     let cart = [];
     let customerName = '';
     let customerPhone = '';
+    let smsConsent = false;
     let customizingItem = null;
     let customizeSelections = [];
     let menuStatus = {};
@@ -216,7 +220,7 @@
       errorEl.style.display = 'none';
       const result = await submitOnlineOrder({
         items: currentItems(), total: cartTotal(), customerName, phone: customerPhone,
-        cardToken: token,
+        smsConsent, cardToken: token,
       });
       if (!result.success) throw new Error(result.error || 'Payment failed.');
 
@@ -263,14 +267,18 @@
 
     function validateWelcomeForm() {
       const hasName = nameInput.value.trim().length > 0;
-      continueBtn.disabled = !hasName;
+      const phoneDigits = phoneInput.value.replace(/\D/g, '');
+      const hasValidPhone = phoneDigits.length >= 10;
+      continueBtn.disabled = !(hasName && hasValidPhone);
     }
     nameInput.addEventListener('input', validateWelcomeForm);
+    phoneInput.addEventListener('input', validateWelcomeForm);
     nameInput.focus();
 
     continueBtn.addEventListener('click', () => {
       customerName = nameInput.value.trim();
       customerPhone = normalizePhoneNumber(phoneInput.value);
+      smsConsent = document.getElementById('smsConsentCheckbox').checked;
       orderStartTime = Date.now();
       document.getElementById('welcomeScreen').style.display = 'none';
       document.getElementById('orderScreen').style.display = 'block';
@@ -585,8 +593,10 @@
       cart = [];
       customerName = '';
       customerPhone = '';
+      smsConsent = false;
       nameInput.value = '';
       phoneInput.value = '';
+      document.getElementById('smsConsentCheckbox').checked = false;
       continueBtn.disabled = true;
       hideAllModals();
       document.getElementById('orderScreen').style.display = 'none';

@@ -54,7 +54,7 @@ async function getFromBackend(params) {
   return res.json();
 }
 
-async function submitOrder({ station, items, total, paymentMethod, customerName, phone }) {
+async function submitOrder({ station, items, total, paymentMethod, customerName, phone, smsConsent }) {
   return postToBackend({
     action: "submitOrder",
     station,
@@ -63,17 +63,19 @@ async function submitOrder({ station, items, total, paymentMethod, customerName,
     paymentMethod,
     customerName: customerName || "",
     phone: phone || "",
+    smsConsent: !!smsConsent,
   });
 }
 
 // Online ordering: charges the card and creates the order in one step.
 // cardToken comes from the Square Web Payments SDK's tokenize() call.
-async function submitOnlineOrder({ items, total, customerName, phone, cardToken }) {
+async function submitOnlineOrder({ items, total, customerName, phone, smsConsent, cardToken }) {
   return postToBackend({
     action: "submitOnlineOrder",
     items, total, cardToken,
     customerName: customerName || "",
     phone: phone || "",
+    smsConsent: !!smsConsent,
   });
 }
 
