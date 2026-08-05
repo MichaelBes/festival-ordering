@@ -532,6 +532,12 @@ h1, h2, h3, .display {
 }
 .mobile-menu-wrap .menu-scroll { padding: 18px; }
 
+.site-footer {
+  text-align: center; padding: 18px 20px 90px;
+  font-size: 0.78rem; color: var(--cream-dim);
+}
+.site-footer a { color: var(--maroon); text-decoration: underline; }
+
 .cart-bar {
   position: fixed; left: 16px; right: 16px; bottom: 16px; width: auto;
   background: var(--maroon-bright); color: #FFF6E4;
