@@ -43,18 +43,25 @@
       <div class="col-heading" style="margin-top:22px;">Needs Attention</div>
       <div id="flaggedList"></div>
 
-      <div class="col-heading" style="margin-top:22px;" id="salesHeading">Sales & Popular Items</div>
+      <div class="col-heading" style="margin-top:22px;">Menu Availability</div>
+      <div id="menuStatusList"></div>
+
+      <div class="col-heading" style="margin-top:22px;">
+        <span id="salesHeading">Sales & Popular Items</span>
+        <div class="range-toggle" id="rangeToggleBottom">
+          <button class="range-btn active" data-range="today">Today</button>
+          <button class="range-btn" data-range="yesterday">Yesterday</button>
+          <button class="range-btn" data-range="all">All Time</button>
+        </div>
+      </div>
       <div class="stat-grid" id="salesGrid"></div>
       <div id="topItemsList" style="margin-top:12px;"></div>
       <div id="byStationList" style="margin-top:12px;"></div>
-
-      <div class="col-heading" style="margin-top:22px;">Menu Availability</div>
-      <div id="menuStatusList"></div>
     </div>
   </div>
 
-  <script src="config.js?v=3"></script>
-  <script src="api.js?v=3"></script>
+  <script src="config.js"></script>
+  <script src="api.js"></script>
   <script>
     document.getElementById('pinInput').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') checkPin();
@@ -81,17 +88,26 @@
     let currentRange = 'today';
     const RANGE_LABELS = { today: "Today's", yesterday: "Yesterday's", all: "All-Time" };
 
-    document.getElementById('rangeToggle').addEventListener('click', (e) => {
+    function handleRangeClick(e) {
       const btn = e.target.closest('button[data-range]');
       if (!btn) return;
       currentRange = btn.dataset.range;
-      document.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', b.dataset.range === currentRange));
       document.getElementById('activityHeading').textContent = RANGE_LABELS[currentRange] + ' Activity';
       document.getElementById('salesHeading').textContent = RANGE_LABELS[currentRange] + ' Sales & Popular Items';
-      refreshStats();
-    });
+      refreshStats(true);
+    }
+    document.getElementById('rangeToggle').addEventListener('click', handleRangeClick);
+    document.getElementById('rangeToggleBottom').addEventListener('click', handleRangeClick);
 
-    async function refreshStats() {
+    // showLoading is only true for a manual range switch — the routine
+    // 5-second background poll should never visibly flicker the page.
+    async function refreshStats(showLoading) {
+      const grids = [document.getElementById('statGrid'), document.getElementById('salesGrid')];
+      if (showLoading) {
+        grids.forEach(g => g && g.classList.add('stats-loading'));
+        document.querySelectorAll('.range-btn').forEach(b => b.disabled = true);
+      }
       try {
         const stats = await fetchStats(currentRange);
         renderStats(stats);
@@ -99,6 +115,11 @@
         renderSales(stats);
       } catch (err) {
         console.error('Stats refresh failed', err);
+      } finally {
+        if (showLoading) {
+          grids.forEach(g => g && g.classList.remove('stats-loading'));
+          document.querySelectorAll('.range-btn').forEach(b => b.disabled = false);
+        }
       }
     }
 
