@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Admin — St. George Festival</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <div class="glow-bar"></div>
@@ -29,14 +29,21 @@
   <div id="dashboard" style="display:none;">
 
     <div class="board">
-      <div class="col-heading">Today's Activity</div>
+      <div class="col-heading">
+        <span id="activityHeading">Today's Activity</span>
+        <div class="range-toggle" id="rangeToggle">
+          <button class="range-btn active" data-range="today">Today</button>
+          <button class="range-btn" data-range="yesterday">Yesterday</button>
+          <button class="range-btn" data-range="all">All Time</button>
+        </div>
+      </div>
       <div id="quotaBox" style="margin-bottom:14px;"></div>
       <div class="stat-grid" id="statGrid"></div>
 
       <div class="col-heading" style="margin-top:22px;">Needs Attention</div>
       <div id="flaggedList"></div>
 
-      <div class="col-heading" style="margin-top:22px;">Sales & Popular Items</div>
+      <div class="col-heading" style="margin-top:22px;" id="salesHeading">Sales & Popular Items</div>
       <div class="stat-grid" id="salesGrid"></div>
       <div id="topItemsList" style="margin-top:12px;"></div>
       <div id="byStationList" style="margin-top:12px;"></div>
@@ -46,8 +53,8 @@
     </div>
   </div>
 
-  <script src="config.js?v=2"></script>
-  <script src="api.js?v=2"></script>
+  <script src="config.js?v=3"></script>
+  <script src="api.js?v=3"></script>
   <script>
     document.getElementById('pinInput').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') checkPin();
@@ -71,9 +78,22 @@
       completed: 'Picked Up', awaiting_payment: 'Awaiting Payment', failed: 'Payment Failed',
     };
 
+    let currentRange = 'today';
+    const RANGE_LABELS = { today: "Today's", yesterday: "Yesterday's", all: "All-Time" };
+
+    document.getElementById('rangeToggle').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-range]');
+      if (!btn) return;
+      currentRange = btn.dataset.range;
+      document.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', b === btn));
+      document.getElementById('activityHeading').textContent = RANGE_LABELS[currentRange] + ' Activity';
+      document.getElementById('salesHeading').textContent = RANGE_LABELS[currentRange] + ' Sales & Popular Items';
+      refreshStats();
+    });
+
     async function refreshStats() {
       try {
-        const stats = await fetchStats();
+        const stats = await fetchStats(currentRange);
         renderStats(stats);
         renderFlagged(stats.flagged);
         renderSales(stats);
@@ -133,8 +153,9 @@
     }
 
     function renderStats(stats) {
+      const ordersLabel = { today: 'Orders Today', yesterday: 'Orders Yesterday', all: 'Orders (All Time)' }[stats.range] || 'Orders';
       const boxes = [
-        { label: 'Orders Today', value: stats.totalToday },
+        { label: ordersLabel, value: stats.totalToday },
         ...Object.entries(stats.byStatus).map(([status, count]) => ({ label: STATUS_LABEL[status] || status, value: count })),
       ];
       document.getElementById('statGrid').innerHTML = boxes.map(b => `

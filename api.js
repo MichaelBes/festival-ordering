@@ -116,6 +116,6 @@ async function setMenuStatus(itemId, status, note) {
 }
 
 // Admin-only: today's order stats and any flagged/stuck orders.
-async function fetchStats() {
-  return getFromBackend({ action: "getStats" });
+async function fetchStats(range) {
+  return getFromBackend({ action: "getStats", range: range || "today" });
 }

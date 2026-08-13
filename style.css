@@ -410,6 +410,14 @@ h1, h2, h3, .display {
   display: flex; justify-content: space-between; align-items: baseline;
 }
 .col-heading .count { font-size: 1rem; color: var(--gold-deep); font-family: 'Barlow Semi Condensed'; }
+.range-toggle { display: flex; gap: 4px; }
+.range-btn {
+  font-family: 'Barlow Semi Condensed'; font-weight: 700; font-size: 0.78rem;
+  padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--gold-deep);
+  background: transparent; color: var(--gold-deep); cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+}
+.range-btn.active { background: var(--maroon-bright); border-color: var(--maroon-bright); color: #FFF6E4; }
 
 .order-card {
   background: var(--bg-card);
