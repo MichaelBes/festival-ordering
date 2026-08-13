@@ -432,6 +432,11 @@ h1, h2, h3, .display {
   border-left: 7px solid var(--status-received);
 }
 .order-card.status-received { border-left-color: var(--status-received); }
+.order-card.status-sms-error {
+  border-left-color: var(--danger);
+  background: rgba(193,53,15,0.06);
+}
+.sms-error-time { font-size: 0.75rem; color: var(--cream-dim); font-weight: 400; }
 .order-card.status-in_progress { border-left-color: var(--status-progress); }
 .order-card.status-ready { border-left-color: var(--status-ready); }
 

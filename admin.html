@@ -42,6 +42,7 @@
 
       <div class="col-heading" style="margin-top:22px;">Needs Attention</div>
       <div id="flaggedList"></div>
+      <div id="smsErrorsList" style="margin-top:10px;"></div>
 
       <div class="col-heading" style="margin-top:22px;">Menu Availability</div>
       <div id="menuStatusList"></div>
@@ -112,6 +113,7 @@
         const stats = await fetchStats(currentRange);
         renderStats(stats);
         renderFlagged(stats.flagged);
+        renderSmsErrors(stats.smsErrors);
         renderSales(stats);
       } catch (err) {
         console.error('Stats refresh failed', err);
@@ -208,6 +210,31 @@
         <div class="order-card status-received">
           <div class="order-card-top"><span class="order-id">${f.orderId}</span></div>
           <div class="order-items">${f.issue}</div>
+        </div>
+      `).join('');
+    }
+
+    function timeAgo(isoString) {
+      const minutes = Math.round((Date.now() - new Date(isoString)) / 60000);
+      if (minutes < 1) return 'just now';
+      if (minutes < 60) return minutes + ' min ago';
+      const hours = Math.round(minutes / 60);
+      return hours + (hours === 1 ? ' hour ago' : ' hours ago');
+    }
+
+    function renderSmsErrors(errors) {
+      const el = document.getElementById('smsErrorsList');
+      if (!errors || errors.length === 0) {
+        el.innerHTML = '';
+        return;
+      }
+      el.innerHTML = errors.map(e => `
+        <div class="order-card status-sms-error">
+          <div class="order-card-top">
+            <span class="order-id">Text failed — ${e.context}</span>
+            <span class="sms-error-time">${timeAgo(e.timestamp)}</span>
+          </div>
+          <div class="order-items">To ${e.phone || '(no number)'}: ${e.error}</div>
         </div>
       `).join('');
     }
