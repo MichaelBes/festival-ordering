@@ -416,7 +416,15 @@
     // version), so nothing out of stock can slip through.
     async function runCheckoutAvailabilityCheck() {
       try {
-        menuStatus = await fetchMenuStatusShared();
+        // Apps Script occasionally has a slow "cold" response — cap how
+        // long checkout will wait for a fresh answer. If it doesn't come
+        // back in time, fall back to whatever the last background poll
+        // already has (at most ~15s old) rather than freezing checkout.
+        const fetchPromise = fetchMenuStatusShared();
+        fetchPromise.then(fresh => { menuStatus = fresh; }).catch(() => {});
+        const timeoutPromise = new Promise(resolve => setTimeout(() => resolve('timeout'), CHECKOUT_AVAILABILITY_TIMEOUT_MS));
+        const result = await Promise.race([fetchPromise, timeoutPromise]);
+        if (result !== 'timeout') menuStatus = result;
       } catch (err) {
         // If the check itself fails, don't block checkout over a network
         // hiccup — fall through using whatever we already had cached.
