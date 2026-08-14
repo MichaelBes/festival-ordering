@@ -162,9 +162,15 @@
     let menuStatus = {}; // itemId -> { status, note, updatedAt }, refreshed periodically
     let orderStartTime = null; // when this customer/volunteer started browsing the menu
 
+    let menuStatusAppliedSeq = 0;
+    let menuStatusRequestSeq = 0;
     async function refreshMenuStatus() {
+      const seq = ++menuStatusRequestSeq;
       try {
-        menuStatus = await fetchMenuStatus();
+        const fresh = await fetchMenuStatusShared();
+        if (seq < menuStatusAppliedSeq) return;
+        menuStatusAppliedSeq = seq;
+        menuStatus = fresh;
         renderMenu();
       } catch (err) {
         console.error('Menu status refresh failed', err);
@@ -410,7 +416,7 @@
     // version), so nothing out of stock can slip through.
     async function runCheckoutAvailabilityCheck() {
       try {
-        menuStatus = await fetchMenuStatus();
+        menuStatus = await fetchMenuStatusShared();
       } catch (err) {
         // If the check itself fails, don't block checkout over a network
         // hiccup — fall through using whatever we already had cached.

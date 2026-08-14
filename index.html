@@ -362,9 +362,18 @@
       `).join('');
     }
 
+    let menuStatusAppliedSeq = 0;
+    let menuStatusRequestSeq = 0;
     async function refreshMenuStatus() {
+      const seq = ++menuStatusRequestSeq;
       try {
-        menuStatus = await fetchMenuStatus();
+        const fresh = await fetchMenuStatusShared();
+        // A slow response that started before a newer one already
+        // finished shouldn't be allowed to overwrite it with stale data
+        // — this is what caused a brief revert-then-correct flicker.
+        if (seq < menuStatusAppliedSeq) return;
+        menuStatusAppliedSeq = seq;
+        menuStatus = fresh;
         renderMenu();
       } catch (err) {
         console.error('Menu status refresh failed', err);
@@ -537,7 +546,7 @@
 
     async function runCheckoutAvailabilityCheck() {
       try {
-        menuStatus = await fetchMenuStatus();
+        menuStatus = await fetchMenuStatusShared();
       } catch (err) { /* fall through on network hiccup */ }
       renderMenu();
 

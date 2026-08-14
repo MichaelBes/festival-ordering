@@ -110,6 +110,22 @@ async function fetchMenuStatus() {
   return result.items || {};
 }
 
+// The background poll and a manual checkout check both need fresh menu
+// status, and previously called fetchMenuStatus() completely
+// independently of each other. If checkout got tapped right as the
+// background poll was also mid-flight, that meant two separate,
+// simultaneous requests competing — a likely cause of the inconsistent
+// "sometimes slow" checkout delay. This makes both share the exact
+// same in-flight request when they overlap, instead of duplicating it.
+let menuStatusFetchInFlight = null;
+async function fetchMenuStatusShared() {
+  if (menuStatusFetchInFlight) return menuStatusFetchInFlight;
+  menuStatusFetchInFlight = fetchMenuStatus().finally(() => {
+    menuStatusFetchInFlight = null;
+  });
+  return menuStatusFetchInFlight;
+}
+
 // Admin-only: sets an item to "normal", "long_wait", or "out_of_stock".
 async function setMenuStatus(itemId, status, note) {
   return postToBackend({ action: "setMenuStatus", itemId, status, note: note || "" });

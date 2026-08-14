@@ -242,10 +242,20 @@
     // ---- Menu availability ----
     let menuStatusCache = {};
     let pendingMenuUpdates = {}; // itemId -> {status, note} optimistically set but not yet confirmed
+    let menuStatusRequestSeq = 0;
+    let menuStatusAppliedSeq = 0;
 
     async function refreshMenuStatus() {
+      const seq = ++menuStatusRequestSeq;
       try {
         const fresh = await fetchMenuStatus();
+        // If the tab was backgrounded, throttled timers can cause an
+        // older, slower request to resolve AFTER a newer one already
+        // did — applying it anyway would flash the item back to a
+        // stale status for a moment. Discard it if that's happened.
+        if (seq < menuStatusAppliedSeq) return;
+        menuStatusAppliedSeq = seq;
+
         // Don't let a background poll overwrite a change we just made
         // and haven't confirmed yet — keep showing our version until
         // the save is actually done.
