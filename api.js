@@ -120,10 +120,21 @@ async function fetchMenuStatus() {
 let menuStatusFetchInFlight = null;
 async function fetchMenuStatusShared() {
   if (menuStatusFetchInFlight) return menuStatusFetchInFlight;
-  menuStatusFetchInFlight = fetchMenuStatus().finally(() => {
-    menuStatusFetchInFlight = null;
+  const promise = fetchMenuStatus();
+  menuStatusFetchInFlight = promise;
+  // Safety valve: .finally() only clears this once the request actually
+  // settles — but if a request genuinely hangs (not just slow, never
+  // resolves or rejects at all), that would leave every future poll and
+  // checkout permanently stuck waiting on the same dead promise. Force
+  // the slot clear after a hard ceiling regardless, so a single stuck
+  // request can never freeze the whole system until a page refresh.
+  setTimeout(() => {
+    if (menuStatusFetchInFlight === promise) menuStatusFetchInFlight = null;
+  }, 10000);
+  promise.finally(() => {
+    if (menuStatusFetchInFlight === promise) menuStatusFetchInFlight = null;
   });
-  return menuStatusFetchInFlight;
+  return promise;
 }
 
 // Admin-only: sets an item to "normal", "long_wait", or "out_of_stock".
