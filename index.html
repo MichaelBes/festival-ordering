@@ -311,6 +311,35 @@
             const status = (menuStatus[item.id] && menuStatus[item.id].status) || 'normal';
             const note = (menuStatus[item.id] && menuStatus[item.id].note) || '';
             const outOfStock = status === 'out_of_stock';
+
+            // Most people should get the standard version fast — only
+            // items whose SOLE choice is spice level force the customize
+            // modal open right away. Anything else (meat choice, starch,
+            // bowl vs sandwich, etc.) defaults to an instant quick-add,
+            // with a small separate "Customize" link for anyone who
+            // actually wants something non-standard.
+            const hasOptions = !!(item.options && item.options.length);
+            const spiceOnly = hasOptions && item.options.length === 1 && item.options[0].name === 'Spice Level';
+            const displayPrice = item.isAddon ? addonPriceFor(item, cart) : item.price;
+
+            let controlsHtml = '';
+            if (!outOfStock) {
+              if (spiceOnly) {
+                controlsHtml = `<button class="add-btn" data-customize-id="${item.id}">
+                     Customize & Add${totalQty(item.id) > 0 ? ` <span class="item-badge">${totalQty(item.id)}</span>` : ''}
+                   </button>`;
+              } else {
+                controlsHtml = `<div class="item-controls-row">
+                     <div class="stepper">
+                       <button data-action="dec" data-id="${item.id}">–</button>
+                       <span class="count" id="count-${item.id}">${simpleQty(item.id)}</span>
+                       <button data-action="inc" data-id="${item.id}">+</button>
+                     </div>
+                     ${hasOptions ? `<button class="customize-link" data-customize-id="${item.id}">Customize</button>` : ''}
+                   </div>`;
+              }
+            }
+
             return `
             <div class="item-card ${outOfStock ? 'item-out-of-stock' : ''}">
               ${item.image ? `<img class="item-image" src="${item.image}" alt="${item.name}" loading="lazy">` : ''}
@@ -318,19 +347,8 @@
               ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
               ${status === 'long_wait' ? `<div class="item-status-tag tag-wait">⏱ Long wait${note ? ' — ' + note : ''}</div>` : ''}
               ${outOfStock ? `<div class="item-status-tag tag-out">Out of stock${note ? ' — ' + note : ''}</div>` : ''}
-              <div class="item-price">$${item.price}</div>
-              <div class="item-controls">
-                ${outOfStock ? '' : (item.options && item.options.length
-                  ? `<button class="add-btn" data-customize-id="${item.id}">
-                       Customize & Add${totalQty(item.id) > 0 ? ` <span class="item-badge">${totalQty(item.id)}</span>` : ''}
-                     </button>`
-                  : `<div class="stepper">
-                       <button data-action="dec" data-id="${item.id}">–</button>
-                       <span class="count" id="count-${item.id}">${simpleQty(item.id)}</span>
-                       <button data-action="inc" data-id="${item.id}">+</button>
-                     </div>`
-                )}
-              </div>
+              <div class="item-price">$${displayPrice}</div>
+              <div class="item-controls">${controlsHtml}</div>
             </div>
           `;
           }).join('')}
@@ -361,6 +379,7 @@
     }
 
     function renderCart() {
+      refreshAddonPricing(cart);
       const cartLinesEl = document.getElementById('cartLines');
       const checkoutBtn = document.getElementById('checkoutBtn');
 
@@ -475,9 +494,11 @@
     });
 
     function cartTotal() {
+      refreshAddonPricing(cart);
       return cart.reduce((sum, l) => sum + l.price * l.qty, 0);
     }
     function currentItems() {
+      refreshAddonPricing(cart);
       return cart.map(l => ({
         id: l.itemId, name: l.name, qty: l.qty, price: l.price, kitchen: l.kitchen, options: l.optionsText,
       }));

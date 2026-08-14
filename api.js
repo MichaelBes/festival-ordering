@@ -119,3 +119,33 @@ async function setMenuStatus(itemId, status, note) {
 async function fetchStats(range) {
   return getFromBackend({ action: "getStats", range: range || "today" });
 }
+
+// ---- Meal-aware addon pricing (Extra Kofta / Extra Chicken) ----
+// True if the cart currently contains anything tagged isMeal in MENU
+// (Combo #1, Kofta Plate, Chicken Plate).
+function cartHasMeal(cart) {
+  return cart.some(l => {
+    const item = MENU.find(m => m.id === l.itemId);
+    return item && item.isMeal;
+  });
+}
+
+// Live price for an addon item right now, given current cart contents.
+function addonPriceFor(item, cart) {
+  return cartHasMeal(cart) ? item.addonPriceWithMeal : item.addonPriceStandalone;
+}
+
+// Re-syncs every addon line's stored price to match current cart
+// contents. Call this before reading any cart line's price (rendering
+// the cart, computing the total, or building the final order) so an
+// addon added before a meal (or vice versa) always reflects the
+// correct price at the moment that matters, not just at add-time.
+function refreshAddonPricing(cart) {
+  const hasMeal = cartHasMeal(cart);
+  cart.forEach(l => {
+    const item = MENU.find(m => m.id === l.itemId);
+    if (item && item.isAddon) {
+      l.price = hasMeal ? item.addonPriceWithMeal : item.addonPriceStandalone;
+    }
+  });
+}

@@ -212,6 +212,16 @@ h1, h2, h3, .display {
 .stepper button:active { background: var(--gold-bright); color: #FFF; border-color: var(--gold-bright); }
 .stepper .count { min-width: 20px; text-align: center; font-weight: 700; }
 
+.item-controls-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.customize-link {
+  background: none; border: none; color: var(--gold-deep);
+  font-family: 'Barlow Semi Condensed'; font-weight: 700; font-size: 0.82rem;
+  text-decoration: underline; padding: 4px; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+}
+
 /* Cart panel */
 .cart-panel {
   background: var(--bg-panel-2);
