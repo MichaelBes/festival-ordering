@@ -214,6 +214,11 @@
             const hasOptions = !!(item.options && item.options.length);
             const spiceOnly = hasOptions && item.options.length === 1 && item.options[0].name === 'Spice Level';
             const displayPrice = item.isAddon ? addonPriceFor(item, cart) : item.price;
+            const addonNote = item.isAddon
+              ? (cartHasMeal(cart)
+                  ? `<div class="addon-note addon-note-active">✓ Meal discount applied</div>`
+                  : `<div class="addon-note">$${item.addonPriceWithMeal} each if added with a Combo or Plate</div>`)
+              : '';
 
             let controlsHtml = '';
             if (!outOfStock) {
@@ -241,6 +246,7 @@
               ${status === 'long_wait' ? `<div class="item-status-tag tag-wait">⏱ Long wait${note ? ' — ' + note : ''}</div>` : ''}
               ${outOfStock ? `<div class="item-status-tag tag-out">Out of stock${note ? ' — ' + note : ''}</div>` : ''}
               <div class="item-price">$${displayPrice}</div>
+              ${addonNote}
               <div class="item-controls">${controlsHtml}</div>
             </div>
           `;
@@ -258,18 +264,23 @@
         cartLinesEl.innerHTML = '<div class="cart-empty">Tap items to add them</div>';
         checkoutBtn.disabled = true;
       } else {
-        cartLinesEl.innerHTML = cart.map(line => `
+        cartLinesEl.innerHTML = cart.map(line => {
+          const menuItem = MENU.find(m => m.id === line.itemId);
+          const isDiscountedAddon = menuItem && menuItem.isAddon && line.price === menuItem.addonPriceWithMeal;
+          return `
           <div class="cart-line">
             <span>
               <span class="qty">${line.qty}×</span>${line.name}
               ${line.optionsText ? `<div class="cart-line-options">${line.optionsText}</div>` : ''}
+              ${isDiscountedAddon ? `<div class="cart-line-options addon-note-active">✓ Meal discount applied</div>` : ''}
             </span>
             <span class="cart-line-right">
               $${line.price * line.qty}
               <button class="cart-line-remove" data-remove="${line.lineId}">✕</button>
             </span>
           </div>
-        `).join('');
+        `;
+        }).join('');
         checkoutBtn.disabled = false;
       }
 

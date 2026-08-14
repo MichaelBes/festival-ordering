@@ -183,6 +183,10 @@ h1, h2, h3, .display {
   font-size: 0.82rem; color: var(--cream-dim); line-height: 1.35;
 }
 .item-price { color: var(--gold-deep); font-weight: 700; font-family: 'Barlow Semi Condensed'; }
+.addon-note {
+  font-size: 0.72rem; color: var(--cream-dim); margin-top: 2px; margin-bottom: 6px;
+}
+.addon-note-active { color: var(--status-ready); font-weight: 700; }
 .item-status-tag {
   font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 8px;
   display: inline-block;
