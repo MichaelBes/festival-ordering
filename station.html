@@ -40,7 +40,10 @@
 
     <div class="cart-panel">
       <h2>Your Order</h2>
-      <div class="ordering-for" id="orderingForLabel">Ordering for: —</div>
+      <div class="ordering-for-row">
+        <div class="ordering-for" id="orderingForLabel">Ordering for: —</div>
+        <button class="cancel-order-btn" id="cancelOrderBtn">Cancel Order</button>
+      </div>
 
       <div class="cart-lines" id="cartLines">
         <div class="cart-empty">Tap items to add them</div>
@@ -126,6 +129,20 @@
     </div>
   </div>
 
+  <!-- Card: shows the 3% fee breakdown before actually charging -->
+  <div class="modal-backdrop" id="cardFeeConfirmModal" style="display:none;">
+    <div class="modal">
+      <h2>Confirm Card Payment</h2>
+      <div class="cash-summary">
+        <div class="cash-summary-row"><span>Subtotal</span><span id="cardFeeSubtotal">$0</span></div>
+        <div class="cash-summary-row"><span>Card Transaction Fee (3%)</span><span id="cardFeeAmount">$0</span></div>
+        <div class="cash-summary-row total"><span>Total</span><span id="cardFeeTotal">$0</span></div>
+      </div>
+      <button class="checkout-btn" id="cardFeeContinueBtn">Continue to Terminal</button>
+      <div class="cancel-link" id="cardFeeCancelBtn">Back</div>
+    </div>
+  </div>
+
   <!-- Card: waiting on the terminal -->
   <div class="modal-backdrop" id="paymentPendingModal" style="display:none;">
     <div class="modal">
@@ -173,11 +190,29 @@
         const fresh = await fetchMenuStatusShared();
         if (seq < menuStatusAppliedSeq) return;
         menuStatusAppliedSeq = seq;
+        const prevStatus = menuStatus;
         menuStatus = fresh;
-        renderMenu();
+        // Only touch the DOM for items whose status actually changed —
+        // a routine poll where nothing's different now does nothing at
+        // all, and even when something did change, only that one card
+        // gets rebuilt (its image included) instead of the whole menu.
+        patchMenuForStatusChange(prevStatus);
       } catch (err) {
         console.error('Menu status refresh failed', err);
       }
+    }
+
+    function patchMenuForStatusChange(prevStatus) {
+      MENU.forEach(item => {
+        const before = JSON.stringify(prevStatus[item.id] || null);
+        const after = JSON.stringify(menuStatus[item.id] || null);
+        if (before === after) return;
+        const card = document.getElementById('item-card-' + item.id);
+        if (!card) return;
+        const built = buildItemCardInner(item);
+        card.className = 'item-card' + (built.outOfStock ? ' item-out-of-stock' : '');
+        card.innerHTML = built.html;
+      });
     }
 
     // ---- Welcome screen ----
@@ -209,6 +244,57 @@
       return cart.filter(l => l.itemId === itemId).reduce((sum, l) => sum + l.qty, 0);
     }
 
+    // Builds one item's card CONTENTS (not the outer wrapper div) so
+    // this same logic can be used both for the full initial render and
+    // for surgically patching a single card later without duplicating
+    // any of this logic in two places.
+    function buildItemCardInner(item) {
+      const status = (menuStatus[item.id] && menuStatus[item.id].status) || 'normal';
+      const note = (menuStatus[item.id] && menuStatus[item.id].note) || '';
+      const outOfStock = status === 'out_of_stock';
+
+      const hasOptions = !!(item.options && item.options.length);
+      const spiceOnly = hasOptions && item.options.length === 1 && item.options[0].name === 'Spice Level';
+      const displayPrice = item.isAddon ? addonPriceFor(item, cart) : item.price;
+      const addonNote = item.isAddon
+        ? (cartHasMeal(cart)
+            ? `<div class="addon-note addon-note-active">✓ Meal discount applied</div>`
+            : `<div class="addon-note">$${item.addonPriceWithMeal} each if added with a Combo or Plate</div>`)
+        : '';
+
+      let controlsHtml = '';
+      if (!outOfStock) {
+        if (spiceOnly) {
+          controlsHtml = `<button class="add-btn" data-customize-id="${item.id}">
+               Customize & Add${totalQty(item.id) > 0 ? ` <span class="item-badge">${totalQty(item.id)}</span>` : ''}
+             </button>`;
+        } else {
+          controlsHtml = `<div class="item-controls-row">
+               <div class="stepper">
+                 <button data-action="dec" data-id="${item.id}">–</button>
+                 <span class="count" id="count-${item.id}">${simpleQty(item.id)}</span>
+                 <button data-action="inc" data-id="${item.id}">+</button>
+               </div>
+               ${hasOptions ? `<button class="customize-link" data-customize-id="${item.id}">Customize</button>` : ''}
+             </div>`;
+        }
+      }
+
+      return {
+        outOfStock,
+        html: `
+          ${item.image ? `<img class="item-image" src="${item.image}" alt="${item.name}" loading="lazy">` : ''}
+          <div class="item-name">${item.name}</div>
+          ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
+          ${status === 'long_wait' ? `<div class="item-status-tag tag-wait">⏱ Long wait${note ? ' — ' + note : ''}</div>` : ''}
+          ${outOfStock ? `<div class="item-status-tag tag-out">Out of stock${note ? ' — ' + note : ''}</div>` : ''}
+          <div class="item-price">$${displayPrice}</div>
+          ${addonNote}
+          <div class="item-controls">${controlsHtml}</div>
+        `,
+      };
+    }
+
     function renderMenu() {
       const wrap = document.getElementById('menuScroll');
       const categories = [...new Set(MENU.map(m => m.category))];
@@ -216,49 +302,8 @@
         <div class="category-label">${cat}</div>
         <div class="item-grid">
           ${MENU.filter(m => m.category === cat).map(item => {
-            const status = (menuStatus[item.id] && menuStatus[item.id].status) || 'normal';
-            const note = (menuStatus[item.id] && menuStatus[item.id].note) || '';
-            const outOfStock = status === 'out_of_stock';
-
-            const hasOptions = !!(item.options && item.options.length);
-            const spiceOnly = hasOptions && item.options.length === 1 && item.options[0].name === 'Spice Level';
-            const displayPrice = item.isAddon ? addonPriceFor(item, cart) : item.price;
-            const addonNote = item.isAddon
-              ? (cartHasMeal(cart)
-                  ? `<div class="addon-note addon-note-active">✓ Meal discount applied</div>`
-                  : `<div class="addon-note">$${item.addonPriceWithMeal} each if added with a Combo or Plate</div>`)
-              : '';
-
-            let controlsHtml = '';
-            if (!outOfStock) {
-              if (spiceOnly) {
-                controlsHtml = `<button class="add-btn" data-customize-id="${item.id}">
-                     Customize & Add${totalQty(item.id) > 0 ? ` <span class="item-badge">${totalQty(item.id)}</span>` : ''}
-                   </button>`;
-              } else {
-                controlsHtml = `<div class="item-controls-row">
-                     <div class="stepper">
-                       <button data-action="dec" data-id="${item.id}">–</button>
-                       <span class="count" id="count-${item.id}">${simpleQty(item.id)}</span>
-                       <button data-action="inc" data-id="${item.id}">+</button>
-                     </div>
-                     ${hasOptions ? `<button class="customize-link" data-customize-id="${item.id}">Customize</button>` : ''}
-                   </div>`;
-              }
-            }
-
-            return `
-            <div class="item-card ${outOfStock ? 'item-out-of-stock' : ''}">
-              ${item.image ? `<img class="item-image" src="${item.image}" alt="${item.name}" loading="lazy">` : ''}
-              <div class="item-name">${item.name}</div>
-              ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
-              ${status === 'long_wait' ? `<div class="item-status-tag tag-wait">⏱ Long wait${note ? ' — ' + note : ''}</div>` : ''}
-              ${outOfStock ? `<div class="item-status-tag tag-out">Out of stock${note ? ' — ' + note : ''}</div>` : ''}
-              <div class="item-price">$${displayPrice}</div>
-              ${addonNote}
-              <div class="item-controls">${controlsHtml}</div>
-            </div>
-          `;
+            const built = buildItemCardInner(item);
+            return `<div class="item-card ${built.outOfStock ? 'item-out-of-stock' : ''}" id="item-card-${item.id}">${built.html}</div>`;
           }).join('')}
         </div>
       `).join('');
@@ -396,7 +441,7 @@
     }
 
     function hideAllModals() {
-      ['payModal', 'cashConfirmModal', 'paymentPendingModal', 'confirmModal', 'customizeModal', 'outOfStockModal', 'longWaitModal'].forEach(id => {
+      ['payModal', 'cashConfirmModal', 'cardFeeConfirmModal', 'paymentPendingModal', 'confirmModal', 'customizeModal', 'outOfStockModal', 'longWaitModal'].forEach(id => {
         document.getElementById(id).style.display = 'none';
       });
     }
@@ -560,18 +605,35 @@
       }
     }
 
-    // ---- Card flow: submit immediately, then poll until the terminal reports success ----
+    // ---- Card flow: show the fee breakdown, then submit and poll until the terminal reports success ----
     let paymentPollTimer = null;
     let pendingOrderId = null;
+    let confirmedCardTotal = 0;
 
-    document.getElementById('payCardBtn').addEventListener('click', async () => {
+    document.getElementById('payCardBtn').addEventListener('click', () => {
       document.getElementById('payModal').style.display = 'none';
+      const subtotal = cartTotal();
+      const fee = cardFeeFor(subtotal);
+      confirmedCardTotal = subtotal + fee;
+      document.getElementById('cardFeeSubtotal').textContent = '$' + subtotal.toFixed(2);
+      document.getElementById('cardFeeAmount').textContent = '$' + fee.toFixed(2);
+      document.getElementById('cardFeeTotal').textContent = '$' + confirmedCardTotal.toFixed(2);
+      document.getElementById('cardFeeConfirmModal').style.display = 'flex';
+    });
+
+    document.getElementById('cardFeeCancelBtn').addEventListener('click', () => {
+      document.getElementById('cardFeeConfirmModal').style.display = 'none';
+      document.getElementById('payModal').style.display = 'flex';
+    });
+
+    document.getElementById('cardFeeContinueBtn').addEventListener('click', async () => {
+      document.getElementById('cardFeeConfirmModal').style.display = 'none';
       document.getElementById('paymentFailedBox').style.display = 'none';
       document.getElementById('paymentPendingModal').style.display = 'flex';
 
       try {
         const result = await submitOrder({
-          station, items: currentItems(), total: cartTotal(),
+          station, items: currentItems(), total: confirmedCardTotal,
           paymentMethod: 'card', customerName, phone: customerPhone, smsConsent,
         });
         pendingOrderId = result.orderId;
@@ -610,6 +672,23 @@
       hideAllModals();
     });
 
+    function resetToWelcomeScreen() {
+      cart = [];
+      customerName = '';
+      customerPhone = '';
+      smsConsent = false;
+      nameInput.value = '';
+      phoneInput.value = '';
+      document.getElementById('smsConsentCheckbox').checked = false;
+      continueBtn.disabled = true;
+      hideAllModals();
+      document.getElementById('orderScreen').style.display = 'none';
+      document.getElementById('welcomeScreen').style.display = 'flex';
+      nameInput.focus();
+      renderMenu();
+      renderCart();
+    }
+
     function showConfirmation(orderId) {
       document.getElementById('confirmName').textContent = customerName;
       document.getElementById('confirmOrderId').textContent = 'Order #' + orderId;
@@ -618,24 +697,14 @@
         "We'll call your name and number when it's ready.";
       document.getElementById('confirmModal').style.display = 'flex';
 
-      setTimeout(() => {
-        hideAllModals();
-        // Reset everything for the next customer, back to the welcome screen.
-        cart = [];
-        customerName = '';
-        customerPhone = '';
-        smsConsent = false;
-        nameInput.value = '';
-        phoneInput.value = '';
-        document.getElementById('smsConsentCheckbox').checked = false;
-        continueBtn.disabled = true;
-        document.getElementById('orderScreen').style.display = 'none';
-        document.getElementById('welcomeScreen').style.display = 'flex';
-        nameInput.focus();
-        renderMenu();
-        renderCart();
-      }, CONFIRMATION_DISPLAY_MS);
+      setTimeout(resetToWelcomeScreen, CONFIRMATION_DISPLAY_MS);
     }
+
+    document.getElementById('cancelOrderBtn').addEventListener('click', () => {
+      if (cart.length === 0 || confirm('Cancel this order and clear the cart? This cannot be undone.')) {
+        resetToWelcomeScreen();
+      }
+    });
 
     renderMenu();
     renderCart();

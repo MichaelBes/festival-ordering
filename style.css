@@ -243,10 +243,21 @@ h1, h2, h3, .display {
   padding: 20px;
 }
 .cart-panel h2 { margin: 0 0 4px; font-size: 1.05rem; color: var(--maroon); }
+.ordering-for-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px; gap: 10px;
+}
 .ordering-for {
   font-family: 'Barlow Semi Condensed'; font-weight: 700;
-  color: var(--gold-deep); margin-bottom: 14px; font-size: 1rem;
+  color: var(--gold-deep); font-size: 1rem;
 }
+.cancel-order-btn {
+  font-family: 'Barlow Semi Condensed'; font-weight: 700; font-size: 0.78rem;
+  color: var(--danger); background: none; border: 1.5px solid var(--danger);
+  border-radius: 20px; padding: 6px 14px; cursor: pointer; white-space: nowrap;
+  -webkit-appearance: none; appearance: none;
+}
+.cancel-order-btn:active { background: var(--danger); color: #FFF; }
 
 .cart-lines { flex: 1; overflow-y: auto; }
 .cart-line {

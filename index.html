@@ -70,6 +70,14 @@
     <div class="modal" style="max-width:420px;">
       <h2>Your Order</h2>
       <div class="cart-lines" id="cartLines" style="max-height:50vh;"></div>
+      <div class="cart-total-row" style="border-bottom:none; padding-bottom:0; margin-bottom:4px;">
+        <span>Subtotal</span>
+        <span id="cartSubtotal">$0</span>
+      </div>
+      <div class="cart-total-row" style="border-bottom:none; padding-bottom:0; margin-bottom:4px; font-size:0.85rem; color:var(--cream-dim);">
+        <span>Card Transaction Fee (3%)</span>
+        <span id="cartCardFee">$0</span>
+      </div>
       <div class="cart-total-row">
         <span>Total</span>
         <span id="cartTotal">$0</span>
@@ -116,6 +124,8 @@
       <h2>Pay for Your Order</h2>
       <div class="cash-summary">
         <div class="cash-summary-row"><span>Order for</span><span id="paymentName">—</span></div>
+        <div class="cash-summary-row"><span>Subtotal</span><span id="paymentSubtotal">$0</span></div>
+        <div class="cash-summary-row"><span>Card Transaction Fee (3%)</span><span id="paymentCardFee">$0</span></div>
         <div class="cash-summary-row total"><span>Total</span><span id="paymentTotal">$0</span></div>
       </div>
       <div id="walletButtons">
@@ -228,7 +238,7 @@
       const errorEl = document.getElementById('paymentError');
       errorEl.style.display = 'none';
       const result = await submitOnlineOrder({
-        items: currentItems(), total: cartTotal(), customerName, phone: customerPhone,
+        items: currentItems(), total: finalTotalWithFee(), customerName, phone: customerPhone,
         smsConsent, cardToken: token,
       });
       if (!result.success) throw new Error(result.error || 'Payment failed.');
@@ -304,6 +314,63 @@
       return cart.filter(l => l.itemId === itemId).reduce((sum, l) => sum + l.qty, 0);
     }
 
+    // Builds one item's card CONTENTS (not the outer wrapper div) so
+    // this same logic can be used both for the full initial render and
+    // for surgically patching a single card later without duplicating
+    // any of this logic in two places.
+    function buildItemCardInner(item) {
+      const status = (menuStatus[item.id] && menuStatus[item.id].status) || 'normal';
+      const note = (menuStatus[item.id] && menuStatus[item.id].note) || '';
+      const outOfStock = status === 'out_of_stock';
+
+      // Most people should get the standard version fast — only
+      // items whose SOLE choice is spice level force the customize
+      // modal open right away. Anything else (meat choice, starch,
+      // bowl vs sandwich, etc.) defaults to an instant quick-add,
+      // with a small separate "Customize" link for anyone who
+      // actually wants something non-standard.
+      const hasOptions = !!(item.options && item.options.length);
+      const spiceOnly = hasOptions && item.options.length === 1 && item.options[0].name === 'Spice Level';
+      const displayPrice = item.isAddon ? addonPriceFor(item, cart) : item.price;
+      const addonNote = item.isAddon
+        ? (cartHasMeal(cart)
+            ? `<div class="addon-note addon-note-active">✓ Meal discount applied</div>`
+            : `<div class="addon-note">$${item.addonPriceWithMeal} each if added with a Combo or Plate</div>`)
+        : '';
+
+      let controlsHtml = '';
+      if (!outOfStock) {
+        if (spiceOnly) {
+          controlsHtml = `<button class="add-btn" data-customize-id="${item.id}">
+               Customize & Add${totalQty(item.id) > 0 ? ` <span class="item-badge">${totalQty(item.id)}</span>` : ''}
+             </button>`;
+        } else {
+          controlsHtml = `<div class="item-controls-row">
+               <div class="stepper">
+                 <button data-action="dec" data-id="${item.id}">–</button>
+                 <span class="count" id="count-${item.id}">${simpleQty(item.id)}</span>
+                 <button data-action="inc" data-id="${item.id}">+</button>
+               </div>
+               ${hasOptions ? `<button class="customize-link" data-customize-id="${item.id}">Customize</button>` : ''}
+             </div>`;
+        }
+      }
+
+      return {
+        outOfStock,
+        html: `
+          ${item.image ? `<img class="item-image" src="${item.image}" alt="${item.name}" loading="lazy">` : ''}
+          <div class="item-name">${item.name}</div>
+          ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
+          ${status === 'long_wait' ? `<div class="item-status-tag tag-wait">⏱ Long wait${note ? ' — ' + note : ''}</div>` : ''}
+          ${outOfStock ? `<div class="item-status-tag tag-out">Out of stock${note ? ' — ' + note : ''}</div>` : ''}
+          <div class="item-price">$${displayPrice}</div>
+          ${addonNote}
+          <div class="item-controls">${controlsHtml}</div>
+        `,
+      };
+    }
+
     function renderMenu() {
       const wrap = document.getElementById('menuScroll');
       const categories = [...new Set(MENU.map(m => m.category))];
@@ -311,55 +378,8 @@
         <div class="category-label">${cat}</div>
         <div class="item-grid">
           ${MENU.filter(m => m.category === cat).map(item => {
-            const status = (menuStatus[item.id] && menuStatus[item.id].status) || 'normal';
-            const note = (menuStatus[item.id] && menuStatus[item.id].note) || '';
-            const outOfStock = status === 'out_of_stock';
-
-            // Most people should get the standard version fast — only
-            // items whose SOLE choice is spice level force the customize
-            // modal open right away. Anything else (meat choice, starch,
-            // bowl vs sandwich, etc.) defaults to an instant quick-add,
-            // with a small separate "Customize" link for anyone who
-            // actually wants something non-standard.
-            const hasOptions = !!(item.options && item.options.length);
-            const spiceOnly = hasOptions && item.options.length === 1 && item.options[0].name === 'Spice Level';
-            const displayPrice = item.isAddon ? addonPriceFor(item, cart) : item.price;
-            const addonNote = item.isAddon
-              ? (cartHasMeal(cart)
-                  ? `<div class="addon-note addon-note-active">✓ Meal discount applied</div>`
-                  : `<div class="addon-note">$${item.addonPriceWithMeal} each if added with a Combo or Plate</div>`)
-              : '';
-
-            let controlsHtml = '';
-            if (!outOfStock) {
-              if (spiceOnly) {
-                controlsHtml = `<button class="add-btn" data-customize-id="${item.id}">
-                     Customize & Add${totalQty(item.id) > 0 ? ` <span class="item-badge">${totalQty(item.id)}</span>` : ''}
-                   </button>`;
-              } else {
-                controlsHtml = `<div class="item-controls-row">
-                     <div class="stepper">
-                       <button data-action="dec" data-id="${item.id}">–</button>
-                       <span class="count" id="count-${item.id}">${simpleQty(item.id)}</span>
-                       <button data-action="inc" data-id="${item.id}">+</button>
-                     </div>
-                     ${hasOptions ? `<button class="customize-link" data-customize-id="${item.id}">Customize</button>` : ''}
-                   </div>`;
-              }
-            }
-
-            return `
-            <div class="item-card ${outOfStock ? 'item-out-of-stock' : ''}">
-              ${item.image ? `<img class="item-image" src="${item.image}" alt="${item.name}" loading="lazy">` : ''}
-              <div class="item-name">${item.name}</div>
-              ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
-              ${status === 'long_wait' ? `<div class="item-status-tag tag-wait">⏱ Long wait${note ? ' — ' + note : ''}</div>` : ''}
-              ${outOfStock ? `<div class="item-status-tag tag-out">Out of stock${note ? ' — ' + note : ''}</div>` : ''}
-              <div class="item-price">$${displayPrice}</div>
-              ${addonNote}
-              <div class="item-controls">${controlsHtml}</div>
-            </div>
-          `;
+            const built = buildItemCardInner(item);
+            return `<div class="item-card ${built.outOfStock ? 'item-out-of-stock' : ''}" id="item-card-${item.id}">${built.html}</div>`;
           }).join('')}
         </div>
       `).join('');
@@ -376,11 +396,29 @@
         // — this is what caused a brief revert-then-correct flicker.
         if (seq < menuStatusAppliedSeq) return;
         menuStatusAppliedSeq = seq;
+        const prevStatus = menuStatus;
         menuStatus = fresh;
-        renderMenu();
+        // Only touch the DOM for items whose status actually changed —
+        // a routine poll where nothing's different now does nothing at
+        // all, and even when something did change, only that one card
+        // gets rebuilt (its image included) instead of the whole menu.
+        patchMenuForStatusChange(prevStatus);
       } catch (err) {
         console.error('Menu status refresh failed', err);
       }
+    }
+
+    function patchMenuForStatusChange(prevStatus) {
+      MENU.forEach(item => {
+        const before = JSON.stringify(prevStatus[item.id] || null);
+        const after = JSON.stringify(menuStatus[item.id] || null);
+        if (before === after) return;
+        const card = document.getElementById('item-card-' + item.id);
+        if (!card) return;
+        const built = buildItemCardInner(item);
+        card.className = 'item-card' + (built.outOfStock ? ' item-out-of-stock' : '');
+        card.innerHTML = built.html;
+      });
     }
 
     // ---- Cart bar + cart modal ----
@@ -393,7 +431,7 @@
       }
       bar.style.display = 'flex';
       document.getElementById('cartBarSummary').textContent = count + (count === 1 ? ' item' : ' items');
-      document.getElementById('cartBarTotal').textContent = '$' + cartTotal();
+      document.getElementById('cartBarTotal').textContent = '$' + finalTotalWithFee().toFixed(2);
     }
 
     function renderCart() {
@@ -424,7 +462,11 @@
         }).join('');
         checkoutBtn.disabled = false;
       }
-      document.getElementById('cartTotal').textContent = '$' + cartTotal();
+      const subtotal = cartTotal();
+      const fee = cardFeeFor(subtotal);
+      document.getElementById('cartSubtotal').textContent = '$' + subtotal.toFixed(2);
+      document.getElementById('cartCardFee').textContent = '$' + fee.toFixed(2);
+      document.getElementById('cartTotal').textContent = '$' + (subtotal + fee).toFixed(2);
       renderCartBar();
     }
 
@@ -520,6 +562,13 @@
       refreshAddonPricing(cart);
       return cart.reduce((sum, l) => sum + l.price * l.qty, 0);
     }
+    // Online orders are always paid by card, so the fee always applies —
+    // this is the actual amount charged and what should be shown
+    // everywhere the customer sees a total.
+    function finalTotalWithFee() {
+      const subtotal = cartTotal();
+      return subtotal + cardFeeFor(subtotal);
+    }
     function currentItems() {
       refreshAddonPricing(cart);
       return cart.map(l => ({
@@ -612,10 +661,15 @@
     function openPaymentModal() {
       document.getElementById('cartModal').style.display = 'none';
       document.getElementById('paymentName').textContent = customerName;
-      document.getElementById('paymentTotal').textContent = '$' + cartTotal();
+      const subtotal = cartTotal();
+      const fee = cardFeeFor(subtotal);
+      const total = subtotal + fee;
+      document.getElementById('paymentSubtotal').textContent = '$' + subtotal.toFixed(2);
+      document.getElementById('paymentCardFee').textContent = '$' + fee.toFixed(2);
+      document.getElementById('paymentTotal').textContent = '$' + total.toFixed(2);
       document.getElementById('paymentError').style.display = 'none';
       document.getElementById('paymentModal').style.display = 'flex';
-      setupWalletButtons(cartTotal());
+      setupWalletButtons(total);
     }
     document.getElementById('paymentCancelBtn').addEventListener('click', () => {
       document.getElementById('paymentModal').style.display = 'none';

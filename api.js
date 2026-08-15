@@ -176,3 +176,9 @@ function refreshAddonPricing(cart) {
     }
   });
 }
+
+// Rounds to the nearest cent using integer cents internally, avoiding
+// floating-point rounding issues with raw decimal multiplication.
+function cardFeeFor(subtotal) {
+  return Math.round(subtotal * 100 * CARD_FEE_RATE) / 100;
+}
