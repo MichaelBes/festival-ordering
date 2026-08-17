@@ -254,7 +254,7 @@
       const outOfStock = status === 'out_of_stock';
 
       const hasOptions = !!(item.options && item.options.length);
-      const spiceOnly = hasOptions && item.options.length === 1 && item.options[0].name === 'Spice Level';
+      const spiceOnly = hasOptions && item.options.some(o => o.name === 'Spice Level');
       const displayPrice = item.isAddon ? addonPriceFor(item, cart) : item.price;
       const addonNote = item.isAddon
         ? (cartHasMeal(cart)

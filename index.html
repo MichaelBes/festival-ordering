@@ -323,14 +323,16 @@
       const note = (menuStatus[item.id] && menuStatus[item.id].note) || '';
       const outOfStock = status === 'out_of_stock';
 
-      // Most people should get the standard version fast — only
-      // items whose SOLE choice is spice level force the customize
-      // modal open right away. Anything else (meat choice, starch,
-      // bowl vs sandwich, etc.) defaults to an instant quick-add,
-      // with a small separate "Customize" link for anyone who
-      // actually wants something non-standard.
+      // Most people should get the standard version fast — items with
+      // a Spice Level choice force the customize modal open right away
+      // (it's a genuine fork between two different dishes, not a minor
+      // tweak), even if they also have lighter options like removing
+      // tahini riding along with it. Anything without a Spice Level
+      // choice (meat choice, starch, tahini-only, etc.) defaults to an
+      // instant quick-add, with a small separate "Customize" link for
+      // anyone who wants something non-standard.
       const hasOptions = !!(item.options && item.options.length);
-      const spiceOnly = hasOptions && item.options.length === 1 && item.options[0].name === 'Spice Level';
+      const spiceOnly = hasOptions && item.options.some(o => o.name === 'Spice Level');
       const displayPrice = item.isAddon ? addonPriceFor(item, cart) : item.price;
       const addonNote = item.isAddon
         ? (cartHasMeal(cart)
