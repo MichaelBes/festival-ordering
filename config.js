@@ -4,7 +4,7 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // Your menu. id must be unique. price is in dollars.
 // "kitchen" tells the system which prep screen this item shows up on:
@@ -61,12 +61,16 @@ const MENU = [
     description: "Roasted, thin-sliced chicken with tomato, parsley, and onion, topped with yogurt sauce and tahini, wrapped in pita.",
     options: [
       { name: "Spice Level", default: 0, choices: ["Regular (standard)", "Spicy"] },
+      { name: "Tahini Sauce", default: 0, choices: ["Included (standard)", "No Tahini Sauce"] },
     ],
   },
   {
     id: "kofta-sandwich", name: "Kofta Sandwich", price: 8, category: "Sandwiches", kitchen: "sandwich",
     image: "images/kofta-sandwich.webp",
     description: "Grilled ground beef kofta with cucumber, tomato, and lettuce, topped with tahini sauce, wrapped in pita.",
+    options: [
+      { name: "Tahini Sauce", default: 0, choices: ["Included (standard)", "No Tahini Sauce"] },
+    ],
   },
   {
     id: "falafel-sandwich", name: "Falafel Sandwich", price: 8, category: "Sandwiches", kitchen: "sandwich",
@@ -79,6 +83,7 @@ const MENU = [
     description: "Roasted, thin-sliced beef with tomato, parsley, and onion, topped with yogurt sauce and lemon-tahini sauce, wrapped in pita.",
     options: [
       { name: "Spice Level", default: 0, choices: ["Regular (standard)", "Spicy"] },
+      { name: "Tahini Sauce", default: 0, choices: ["Included (standard)", "No Tahini Sauce"] },
     ],
   },
   {
@@ -102,9 +107,10 @@ const MENU = [
   {
     id: "beef-shawarma-bowl", name: "Beef Shawarma Bowl", price: 12, category: "Sandwiches", kitchen: "sandwich",
     image: "images/beef-shawarma-bowl.webp",
-    description: "Bed of rice topped with roasted, thin-sliced beef and served with salad.",
+    description: "Bed of rice topped with roasted, thin-sliced beef, yogurt sauce, and lemon-tahini sauce, served with salad.",
     options: [
       { name: "Spice Level", default: 0, choices: ["Regular (standard)", "Spicy"] },
+      { name: "Tahini Sauce", default: 0, choices: ["Included (standard)", "No Tahini Sauce"] },
     ],
   },
 
@@ -221,5 +227,5 @@ const CARD_FEE_RATE = 0.03;
 // Get both from the same Square Developer Dashboard app:
 // Credentials page (Application ID) and Locations page (Location ID
 // — same value already in Code.gs's SQUARE_LOCATION_ID).
-const SQUARE_APPLICATION_ID = "sq0idp-nk75rLZVR1aMkVOO_vry3w";
-const SQUARE_LOCATION_ID_PUBLIC = "L6VV44AAQ0SC3";
+const SQUARE_APPLICATION_ID = "PASTE_YOUR_SQUARE_APPLICATION_ID_HERE";
+const SQUARE_LOCATION_ID_PUBLIC = "PASTE_YOUR_LOCATION_ID_HERE";
