@@ -432,7 +432,11 @@ h1, h2, h3, .display {
 .history-meta { font-size: 0.85rem; color: var(--cream-dim); margin-top: 4px; }
 
 /* ============ KITCHEN SCREEN ============ */
-.board { padding: 22px; }
+.board {
+  padding: 22px;
+  height: calc(100% - 61px);
+  overflow-y: auto;
+}
 .columns { display: grid; gap: 22px; grid-template-columns: 1fr 1fr; }
 
 .col-heading {
