@@ -434,7 +434,7 @@ h1, h2, h3, .display {
 /* ============ KITCHEN SCREEN ============ */
 .board {
   padding: 22px;
-  height: calc(100% - 61px);
+  height: calc(100vh - 61px);
   overflow-y: auto;
 }
 .columns { display: grid; gap: 22px; grid-template-columns: 1fr 1fr; }
