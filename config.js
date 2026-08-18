@@ -4,7 +4,7 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // Your menu. id must be unique. price is in dollars.
 // "kitchen" tells the system which prep screen this item shows up on:
@@ -32,19 +32,22 @@ const MENU = [
   {
     id: "combo-1", name: "Combo Plate", price: 22, category: "Combos", kitchen: "main",
     image: "images/combo-1.webp",
-    description: "1 skewer of chicken and 2 skewers of kofta with rice, 5 pieces of stuffed grape leaves (mahshi), side salad, and 1 cheese goulash pastry. Comes with a free can of soda and a small dessert. Not all items shown in photo.",
+    description: "1 skewer of chicken and 2 skewers of kofta with rice or macaroni b\u00e9chamel, 5 pieces of stuffed grape leaves (mahshi), side salad, and 1 cheese goulash pastry. Comes with a free can of soda and a small dessert. Not all items shown in photo.",
     isMeal: true,
+    options: [
+      { name: "Starch", default: 0, choices: ["Rice (standard)", "Macaroni B\u00e9chamel"] },
+    ],
   },
 
   // ---- Plates ----
   {
-    id: "kofta-plate", name: "Kofta Plate", price: 12, category: "Plates", kitchen: "main",
+    id: "kofta-plate", name: "Kofta Plate", price: 13, category: "Plates", kitchen: "main",
     image: "images/kofta-plate.webp",
     description: "2 pieces of kofta served with rice, 5 pieces of stuffed grape leaves (mahshi), side salad, and 1 goulash pastry.",
     isMeal: true,
   },
   {
-    id: "chicken-plate", name: "Chicken Plate", price: 12, category: "Plates", kitchen: "main",
+    id: "chicken-plate", name: "Chicken Plate", price: 13, category: "Plates", kitchen: "main",
     image: "images/chicken-plate.webp",
     description: "1 skewer of shish tawook (grilled chicken) served with rice, 5 pieces of stuffed grape leaves (mahshi), side salad, and 1 goulash pastry.",
     isMeal: true,
@@ -55,19 +58,20 @@ const MENU = [
   {
     id: "shawarma-bowl", name: "Shawarma Bowl", price: 13, category: "Plates", kitchen: "main",
     image: "images/beef-shawarma-bowl.webp",
-    description: "Bed of rice, topped with roasted, shaved beef, served with salad.",
+    description: "Bed of rice, topped with roasted, shaved beef or chicken, served with salad.",
     options: [
+      { name: "Meat", default: 0, choices: ["Beef (standard)", "Chicken"] },
       { name: "Spice Level", default: 0, choices: ["Regular (standard)", "Spicy"] },
       { name: "Tahini Sauce", default: 0, choices: ["Included (standard)", "No Tahini Sauce"] },
     ],
   },
-  // New on the menu — description is a placeholder based on the name
-  // alone, since no fuller description was given. Update once you
-  // have real details.
   {
-    id: "feteer-sausage-bastrami", name: "Feteer With Sausage & Bastrami", price: 10, category: "Plates", kitchen: "main",
-    image: "",
-    description: "Feteer pastry filled with sausage and bastrami.",
+    id: "feteer-sausage-bastrami", name: "Feteer With Sausage or Bastrami", price: 10, category: "Plates", kitchen: "main",
+    image: "images/feteer-sausage-bastrami.webp",
+    description: "Flaky, layered Egyptian feteer pastry filled with your choice of spiced sausage or bastrami (seasoned, cured beef).",
+    options: [
+      { name: "Filling", default: 0, choices: ["Sausage (standard)", "Bastrami"] },
+    ],
   },
 
   // ---- Sandwiches ----
@@ -77,8 +81,9 @@ const MENU = [
   {
     id: "shawarma-sandwich", name: "Shawarma Sandwich", price: 13, category: "Sandwiches", kitchen: "sandwich",
     image: "images/beef-shawarma-sandwich.webp",
-    description: "Roasted, shaved beef served with salads, wrapped in pita.",
+    description: "Roasted, shaved beef or chicken, served with salads, wrapped in pita.",
     options: [
+      { name: "Meat", default: 0, choices: ["Beef (standard)", "Chicken"] },
       { name: "Spice Level", default: 0, choices: ["Regular (standard)", "Spicy"] },
       { name: "Tahini Sauce", default: 0, choices: ["Included (standard)", "No Tahini Sauce"] },
     ],
@@ -89,12 +94,12 @@ const MENU = [
     description: "Spiced mashed chickpeas formed into balls and deep-fried, in pita bread.",
   },
   {
-    id: "sausage-sandwich", name: "Sausage Sandwich", price: 8, category: "Sandwiches", kitchen: "sandwich",
+    id: "sausage-sandwich", name: "Sausage Sandwich", price: 9, category: "Sandwiches", kitchen: "sandwich",
     image: "images/sausage-sandwich.webp",
     description: "Spiced ground beef stuffed in beef casing, cooked with green peppers and onions.",
   },
   {
-    id: "gyro-sandwich", name: "Gyro Sandwich", price: 9, category: "Sandwiches", kitchen: "sandwich",
+    id: "gyro-sandwich", name: "Gyro Sandwich", price: 10, category: "Sandwiches", kitchen: "sandwich",
     image: "images/gyro-sandwich.webp",
     description: "Thinly sliced, seasoned beef and lamb wrapped in pita bread, topped with tzatziki sauce, sliced tomatoes, and onions.",
   },
@@ -106,14 +111,14 @@ const MENU = [
 
   // ---- Sides ----
   {
+    id: "stuffed-grape-leaves", name: "Stuffed Grape Leaves (Mahshi)", price: 3, category: "Sides", kitchen: "main",
+    image: "images/stuffed-grape-leaves.webp",
+    description: "10 pieces of grape leaves stuffed with rice and ground beef.",
+  },
+  {
     id: "macaroni-bechamel", name: "Macaroni B\u00e9chamel", price: 3, category: "Sides", kitchen: "main",
     image: "images/macaroni-bechamel.webp",
     description: "An Egyptian take on baked pasta — penne layered with spiced ground beef and onion, topped with creamy b\u00e9chamel sauce and baked golden.",
-  },
-  {
-    id: "stuffed-grape-leaves", name: "Stuffed Grape Leaves (Mahshi)", price: 2, category: "Sides", kitchen: "main",
-    image: "images/stuffed-grape-leaves.webp",
-    description: "10 pieces of grape leaves stuffed with rice and ground beef.",
   },
   {
     id: "goulash", name: "Goulash", price: 2, category: "Sides", kitchen: "main",
@@ -122,6 +127,18 @@ const MENU = [
   },
   // Egyptian Sausage (standalone) removed — not on the new official
   // menu; only the Sausage Sandwich remains.
+  {
+    id: "feteer-meshaltet-whole", name: "Whole Feteer Meshaltet", price: 25, category: "Sides", kitchen: "main",
+    image: "images/feteer-meshaltet.webp",
+    description: "A whole feteer meshaltet — a large, flaky Egyptian pastry made of many thin, torn and layered sheets of dough, baked until golden. Serves a group.",
+  },
+  {
+    id: "feteer-meshaltet-slice", name: "Feteer Meshaltet (By the Slice)", price: 3, category: "Sides", kitchen: "main",
+    image: "images/feteer-meshaltet.webp",
+    description: "A single slice of feteer meshaltet — flaky, torn and layered Egyptian pastry, baked until golden.",
+  },
+  // Placed last, matching where these fall on the physical menu — after
+  // the numbered items, right before Desserts.
   // These two automatically charge the meal-discount price whenever the
   // cart already contains a plate/combo, and the full standalone price
   // otherwise — recalculated live any time the cart changes, matching
@@ -137,19 +154,6 @@ const MENU = [
     image: "",
     description: "One additional piece of grilled chicken (shish tawook). $2 each when added alongside a Combo, Kofta Plate, or Chicken Plate — $4 each on its own.",
     isAddon: true, addonPriceWithMeal: 2, addonPriceStandalone: 4,
-  },
-  // New on the menu — descriptions are placeholders based on the name
-  // alone, since no fuller details were given. Update once you have
-  // real descriptions (e.g. how many people a "whole" one serves).
-  {
-    id: "feteer-meshaltet-whole", name: "Whole Feteer Meshaltet", price: 25, category: "Sides", kitchen: "main",
-    image: "",
-    description: "A whole feteer meshaltet — flaky, layered Egyptian pastry.",
-  },
-  {
-    id: "feteer-meshaltet-slice", name: "Feteer Meshaltet (By the Slice)", price: 3, category: "Sides", kitchen: "main",
-    image: "",
-    description: "A single slice of flaky, layered Egyptian feteer meshaltet pastry.",
   },
 
   // ---- Desserts ----
@@ -227,5 +231,5 @@ const CARD_FEE_RATE = 0.03;
 // Get both from the same Square Developer Dashboard app:
 // Credentials page (Application ID) and Locations page (Location ID
 // — same value already in Code.gs's SQUARE_LOCATION_ID).
-const SQUARE_APPLICATION_ID = "sq0idp-nk75rLZVR1aMkVOO_vry3w";
-const SQUARE_LOCATION_ID_PUBLIC = "L6VV44AAQ0SC3";
+const SQUARE_APPLICATION_ID = "PASTE_YOUR_SQUARE_APPLICATION_ID_HERE";
+const SQUARE_LOCATION_ID_PUBLIC = "PASTE_YOUR_LOCATION_ID_HERE";
