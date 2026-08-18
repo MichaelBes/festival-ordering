@@ -347,13 +347,17 @@
                Customize & Add${totalQty(item.id) > 0 ? ` <span class="item-badge">${totalQty(item.id)}</span>` : ''}
              </button>`;
         } else {
+          // The stepper only counts standard (non-customized) lines, so
+          // it can read 0 even when a customized version is already in
+          // the cart — show that separately here so it's not silent.
+          const customizedQty = totalQty(item.id) - simpleQty(item.id);
           controlsHtml = `<div class="item-controls-row">
                <div class="stepper">
                  <button data-action="dec" data-id="${item.id}">–</button>
                  <span class="count" id="count-${item.id}">${simpleQty(item.id)}</span>
                  <button data-action="inc" data-id="${item.id}">+</button>
                </div>
-               ${hasOptions ? `<button class="customize-link" data-customize-id="${item.id}">Customize</button>` : ''}
+               ${hasOptions ? `<button class="customize-link" data-customize-id="${item.id}">Customize${customizedQty > 0 ? ` <span class="item-badge">${customizedQty}</span>` : ''}</button>` : ''}
              </div>`;
         }
       }
