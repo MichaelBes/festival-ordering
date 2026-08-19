@@ -4,7 +4,7 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // Your menu. id must be unique. price is in dollars.
 // "kitchen" tells the system which prep screen this item shows up on:
@@ -35,19 +35,20 @@ const MENU = [
     description: "1 skewer of chicken and 2 skewers of kofta with rice or macaroni b\u00e9chamel, 5 pieces of stuffed grape leaves (mahshi), side salad, and 1 cheese goulash pastry. Comes with a free can of soda and a small dessert. Not all items shown in photo.",
     isMeal: true,
     options: [
+      { name: "Meat", default: 0, choices: ["Kofta & Chicken (standard)", "All Kofta", "All Chicken"] },
       { name: "Starch", default: 0, choices: ["Rice (standard)", "Macaroni B\u00e9chamel"] },
     ],
   },
 
   // ---- Plates ----
   {
-    id: "kofta-plate", name: "Kofta Plate", price: 13, category: "Plates", kitchen: "main",
+    id: "kofta-plate", name: "Kofta Plate", price: 15, category: "Plates", kitchen: "main",
     image: "images/kofta-plate.webp",
     description: "2 pieces of kofta served with rice, 5 pieces of stuffed grape leaves (mahshi), side salad, and 1 goulash pastry.",
     isMeal: true,
   },
   {
-    id: "chicken-plate", name: "Chicken Plate", price: 13, category: "Plates", kitchen: "main",
+    id: "chicken-plate", name: "Chicken Plate", price: 15, category: "Plates", kitchen: "main",
     image: "images/chicken-plate.webp",
     description: "1 skewer of shish tawook (grilled chicken) served with rice, 5 pieces of stuffed grape leaves (mahshi), side salad, and 1 goulash pastry.",
     isMeal: true,
@@ -65,14 +66,8 @@ const MENU = [
       { name: "Tahini Sauce", default: 0, choices: ["Included (standard)", "No Tahini Sauce"] },
     ],
   },
-  {
-    id: "feteer-sausage-bastrami", name: "Feteer With Sausage or Bastrami", price: 10, category: "Plates", kitchen: "main",
-    image: "images/feteer-sausage-bastrami.webp",
-    description: "Flaky, layered Egyptian feteer pastry filled with your choice of spiced sausage or bastrami (seasoned, cured beef).",
-    options: [
-      { name: "Filling", default: 0, choices: ["Sausage (standard)", "Bastrami"] },
-    ],
-  },
+  // Feteer With Sausage or Bastrami removed — ordered at a different
+  // location now, not part of this ordering system anymore.
 
   // ---- Sandwiches ----
   // Chicken Shawarma Sandwich removed — the new official menu no
@@ -99,7 +94,7 @@ const MENU = [
     description: "Spiced ground beef stuffed in beef casing, cooked with green peppers and onions.",
   },
   {
-    id: "gyro-sandwich", name: "Gyro Sandwich", price: 10, category: "Sandwiches", kitchen: "sandwich",
+    id: "gyro-sandwich", name: "Gyro Sandwich", price: 13, category: "Sandwiches", kitchen: "sandwich",
     image: "images/gyro-sandwich.webp",
     description: "Thinly sliced, seasoned beef and lamb wrapped in pita bread, topped with tzatziki sauce, sliced tomatoes, and onions.",
   },
@@ -111,38 +106,25 @@ const MENU = [
 
   // ---- Sides ----
   {
-    id: "stuffed-grape-leaves", name: "Stuffed Grape Leaves (Mahshi)", price: 3, category: "Sides", kitchen: "main",
+    id: "stuffed-grape-leaves", name: "Stuffed Grape Leaves (Mahshi)", price: 4, category: "Sides", kitchen: "main",
     image: "images/stuffed-grape-leaves.webp",
     description: "10 pieces of grape leaves stuffed with rice and ground beef.",
   },
   {
-    id: "macaroni-bechamel", name: "Macaroni B\u00e9chamel", price: 3, category: "Sides", kitchen: "main",
+    id: "macaroni-bechamel", name: "Macaroni B\u00e9chamel", price: 4, category: "Sides", kitchen: "main",
     image: "images/macaroni-bechamel.webp",
     description: "An Egyptian take on baked pasta — penne layered with spiced ground beef and onion, topped with creamy b\u00e9chamel sauce and baked golden.",
   },
   {
-    id: "goulash", name: "Goulash", price: 2, category: "Sides", kitchen: "main",
+    id: "goulash", name: "Goulash", price: 4, category: "Sides", kitchen: "main",
     image: "images/goulash.webp",
     description: "3 pieces of savory pastry made of filo dough filled with salted cheese.",
   },
-  // Egyptian Sausage (standalone) removed — not on the new official
-  // menu; only the Sausage Sandwich remains.
-  {
-    id: "feteer-meshaltet-whole", name: "Whole Feteer Meshaltet", price: 25, category: "Sides", kitchen: "main",
-    image: "images/feteer-meshaltet.webp",
-    description: "A whole feteer meshaltet — a large, flaky Egyptian pastry made of many thin, torn and layered sheets of dough, baked until golden. Serves a group.",
-  },
-  {
-    id: "feteer-meshaltet-slice", name: "Feteer Meshaltet (By the Slice)", price: 3, category: "Sides", kitchen: "main",
-    image: "images/feteer-meshaltet.webp",
-    description: "A single slice of feteer meshaltet — flaky, torn and layered Egyptian pastry, baked until golden.",
-  },
-  // Placed last, matching where these fall on the physical menu — after
-  // the numbered items, right before Desserts.
+  // Whole/sliced Feteer Meshaltet removed — ordered at a different
+  // location now, not part of this ordering system anymore.
   // These two automatically charge the meal-discount price whenever the
   // cart already contains a plate/combo, and the full standalone price
-  // otherwise — recalculated live any time the cart changes, matching
-  // the new menu's "$2 with a meal / $4 on its own" pricing exactly.
+  // otherwise — recalculated live any time the cart changes.
   {
     id: "extra-kofta", name: "Extra Kofta (1 pc)", price: 4, category: "Sides", kitchen: "main",
     image: "",
@@ -156,30 +138,21 @@ const MENU = [
     isAddon: true, addonPriceWithMeal: 2, addonPriceStandalone: 4,
   },
 
-  // ---- Desserts ----
-  {
-    id: "kunafa", name: "Kunafa", price: 2, category: "Desserts", kitchen: "main",
-    image: "images/kunafa.webp",
-    description: "Fine shredded kunafa pastry rolled around sweet cream, topped with pistachio, sweetened with syrup, and baked until golden.",
-  },
-  {
-    id: "basbousa", name: "Basbousa", price: 3, category: "Desserts", kitchen: "main",
-    image: "images/basbousa.webp",
-    description: "A semolina cake soaked in simple syrup.",
-  },
-  {
-    id: "baklava", name: "Baklava", price: 5, category: "Desserts", kitchen: "main",
-    image: "images/baklava.webp",
-    description: "2 pieces of flaky filo pastry filled with nuts and sweet syrup.",
-  },
+  // Desserts removed entirely — ordered at a different location now.
 
-  // ---- Drinks ----
-  { id: "gatorade", name: "Gatorade", price: 2, category: "Drinks", kitchen: "main", image: "", description: "" },
-  { id: "propel", name: "Propel", price: 2, category: "Drinks", kitchen: "main", image: "", description: "" },
-  { id: "capri-sun", name: "Capri Sun", price: 1, category: "Drinks", kitchen: "main", image: "", description: "" },
-  { id: "water", name: "Bottled Water", price: 1, category: "Drinks", kitchen: "main", image: "", description: "" },
-  { id: "soda", name: "Soda", price: 1, category: "Drinks", kitchen: "main", image: "", description: "" },
-  { id: "sparkling-water", name: "Sparkling Water", price: 2, category: "Drinks", kitchen: "main", image: "", description: "" },
+  // ---- Snacks ----
+  { id: "chips", name: "Chips", price: 1, category: "Snacks", kitchen: "main", image: "", description: "" },
+
+  // ---- $1 Drinks ----
+  { id: "gatorade-small", name: "Gatorade (Small)", price: 1, category: "$1 Drinks", kitchen: "main", image: "", description: "" },
+  { id: "water", name: "Bottled Water", price: 1, category: "$1 Drinks", kitchen: "main", image: "", description: "" },
+  { id: "soda", name: "Pop Can", price: 1, category: "$1 Drinks", kitchen: "main", image: "", description: "" },
+  { id: "capri-sun", name: "Capri Sun", price: 1, category: "$1 Drinks", kitchen: "main", image: "", description: "" },
+  { id: "sunny-d", name: "Sunny D", price: 1, category: "$1 Drinks", kitchen: "main", image: "", description: "" },
+
+  // ---- $2 Drinks ----
+  { id: "sparkling-water", name: "ICEE Sparkling Water", price: 2, category: "$2 Drinks", kitchen: "main", image: "", description: "" },
+  { id: "gatorade-large", name: "Gatorade (Large)", price: 2, category: "$2 Drinks", kitchen: "main", image: "", description: "" },
 ];
 
 // Which station number this iPad is. You can also override this
@@ -231,5 +204,5 @@ const CARD_FEE_RATE = 0.03;
 // Get both from the same Square Developer Dashboard app:
 // Credentials page (Application ID) and Locations page (Location ID
 // — same value already in Code.gs's SQUARE_LOCATION_ID).
-const SQUARE_APPLICATION_ID = "sq0idp-nk75rLZVR1aMkVOO_vry3w";
-const SQUARE_LOCATION_ID_PUBLIC = "L6VV44AAQ0SC3";
+const SQUARE_APPLICATION_ID = "PASTE_YOUR_SQUARE_APPLICATION_ID_HERE";
+const SQUARE_LOCATION_ID_PUBLIC = "PASTE_YOUR_LOCATION_ID_HERE";

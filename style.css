@@ -274,6 +274,19 @@ h1, h2, h3, .display {
   border-top: 2px solid var(--gold-deep);
   color: var(--maroon);
 }
+.order-notes-field {
+  margin-bottom: 14px;
+}
+.order-notes-field label {
+  display: block; font-family: 'Barlow Semi Condensed'; font-weight: 700;
+  font-size: 0.82rem; color: var(--maroon); margin-bottom: 6px;
+}
+.order-notes-field textarea {
+  width: 100%; box-sizing: border-box; resize: none;
+  border: 1.5px solid var(--line); border-radius: 10px;
+  padding: 10px 12px; font-family: 'Barlow', sans-serif; font-size: 0.92rem;
+  background: var(--bg-panel-2); color: var(--ink); min-height: 52px;
+}
 .checkout-btn {
   border: none; background: var(--maroon-bright); color: #FFF6E4;
   padding: 18px; border-radius: 12px; font-size: 1.15rem;
@@ -494,6 +507,11 @@ h1, h2, h3, .display {
   margin: 10px 0; padding-left: 20px; font-size: 1rem; line-height: 1.6;
 }
 .order-items-list li { margin-bottom: 2px; }
+.order-notes-alert {
+  background: #FFF3CD; border: 2px solid var(--danger); border-radius: 8px;
+  color: #7A1F1F; font-weight: 700; font-size: 0.95rem;
+  padding: 8px 12px; margin-top: 8px;
+}
 .order-tag {
   display: inline-block; font-size: 0.72rem; font-weight: 700;
   padding: 3px 9px; border-radius: 20px; margin-left: 8px;

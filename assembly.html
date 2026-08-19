@@ -5,7 +5,7 @@
 <title>Assembly — St. George Festival</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css">
 </head>
 <body class="kitchen">
   <div class="glow-bar"></div>
@@ -19,8 +19,8 @@
     <div id="queueList"></div>
   </div>
 
-  <script src="config.js?v=2"></script>
-  <script src="api.js?v=2"></script>
+  <script src="config.js"></script>
+  <script src="api.js"></script>
   <script>
     let ordersState = [];
     let pendingUpdates = {}; // orderId -> status we've optimistically set but not yet confirmed
@@ -65,6 +65,7 @@
             </span>
             <span class="order-elapsed">${timeAgo(o.timestamp)}</span>
           </div>
+          ${o.notes ? `<div class="order-notes-alert">⚠️ ${o.notes}</div>` : ''}
           <ul class="order-items-list">
             ${items.map(i => `<li>${i.qty}× ${i.name}${i.options ? ` <span class="order-tag">${i.options}</span>` : ''} <span class="history-meta">(${i.kitchen})</span></li>`).join('')}
           </ul>
