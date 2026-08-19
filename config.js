@@ -4,7 +4,7 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
 
 // Your menu. id must be unique. price is in dollars.
 // "kitchen" tells the system which prep screen this item shows up on:
@@ -205,5 +205,5 @@ const CARD_FEE_RATE = 0.03;
 // Get both from the same Square Developer Dashboard app:
 // Credentials page (Application ID) and Locations page (Location ID
 // — same value already in Code.gs's SQUARE_LOCATION_ID).
-const SQUARE_APPLICATION_ID = "PASTE_YOUR_SQUARE_APPLICATION_ID_HERE";
-const SQUARE_LOCATION_ID_PUBLIC = "PASTE_YOUR_LOCATION_ID_HERE";
+const SQUARE_APPLICATION_ID = "sq0idp-nk75rLZVR1aMkVOO_vry3w";
+const SQUARE_LOCATION_ID_PUBLIC = "L6VV44AAQ0SC3";
