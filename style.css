@@ -77,6 +77,7 @@ h1, h2, h3, .display {
   align-items: center;
   justify-content: center;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 24px;
 }
 .welcome-card {
@@ -102,6 +103,10 @@ h1, h2, h3, .display {
   display: block; text-align: left; font-size: 0.85rem;
   color: var(--cream-dim); margin-bottom: 5px;
   font-family: 'Barlow Semi Condensed'; font-weight: 700;
+}
+.field-hint {
+  text-align: left; font-size: 0.78rem; color: var(--danger);
+  margin: -10px 0 12px; min-height: 1em;
 }
 .welcome-card input {
   width: 100%; padding: 12px 14px; border-radius: 10px;
@@ -156,6 +161,7 @@ h1, h2, h3, .display {
 }
 .menu-scroll {
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 24px;
 }
 .category-label {
@@ -260,7 +266,8 @@ h1, h2, h3, .display {
 }
 .cancel-order-btn:active { background: var(--danger); color: #FFF; }
 
-.cart-lines { flex: 1; overflow-y: auto; }
+.cart-lines { flex: 1; overflow-y: auto;
+  -webkit-overflow-scrolling: touch; }
 .cart-line {
   display: flex; justify-content: space-between; align-items: center;
   padding: 10px 0; border-bottom: 1px solid var(--line);
@@ -434,7 +441,13 @@ h1, h2, h3, .display {
   border: 1.5px solid var(--line); background: var(--bg-panel);
   color: var(--ink); font-size: 1.1rem; font-family: 'Barlow';
 }
-.history-list { padding: 12px 24px 24px; }
+.history-list {
+  padding: 12px 24px 24px;
+  height: calc(100vh - 61px - 80px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
 .history-card {
   background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px;
   padding: 16px 18px; margin-bottom: 12px; box-shadow: var(--shadow);
@@ -443,12 +456,22 @@ h1, h2, h3, .display {
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
 }
 .history-meta { font-size: 0.85rem; color: var(--cream-dim); margin-top: 4px; }
+.undo-pickup-btn {
+  margin-top: 10px; width: 100%;
+  background: none; border: 1.5px solid var(--gold-deep); border-radius: 8px;
+  color: var(--gold-deep); font-family: 'Barlow Semi Condensed'; font-weight: 700;
+  font-size: 0.85rem; padding: 8px; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+}
+.undo-pickup-btn:active { background: var(--gold-deep); color: #FFF; }
+.undo-pickup-btn:disabled { opacity: 0.6; }
 
 /* ============ KITCHEN SCREEN ============ */
 .board {
   padding: 22px;
   height: calc(100vh - 61px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .columns { display: grid; gap: 22px; grid-template-columns: 1fr 1fr; }
 
@@ -525,6 +548,11 @@ h1, h2, h3, .display {
 }
 .btn-start { background: var(--status-progress); color: #FFF; }
 .btn-ready { background: var(--status-ready); color: #FFF; }
+.btn-send-back {
+  background: none; border: 1.5px solid var(--cream-dim); color: var(--cream-dim);
+  flex: 0 0 auto; padding: 6px 12px !important; font-size: 0.7rem !important;
+  border-radius: 20px; align-self: center;
+}
 .order-actions button:disabled { opacity: 0.5; }
 
 /* ============ PICKUP SCREEN — row list ============ */
@@ -600,6 +628,7 @@ h1, h2, h3, .display {
 .mobile-menu-wrap {
   height: calc(100% - 61px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding-bottom: 90px; /* room for the sticky cart bar */
 }
 .mobile-menu-wrap .menu-scroll { padding: 18px; }

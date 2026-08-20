@@ -89,6 +89,16 @@ async function updateOrderStatus(orderId, status) {
   return postToBackend({ action: "updateStatus", orderId, status });
 }
 
+// Corrects an accidental "Picked Up" tap — sends the order back to
+// "ready" without re-texting the customer.
+async function undoPickup(orderId) {
+  return postToBackend({ action: "undoPickup", orderId });
+}
+
+async function sendBackToKitchen(orderId) {
+  return postToBackend({ action: "sendBackToKitchen", orderId });
+}
+
 // Called by the Main Kitchen or Sandwich Kitchen screen when staff tap
 // "Start" on an order — marks that kitchen's portion as started.
 async function startOrderPortion(orderId, kitchen) {

@@ -70,6 +70,7 @@
             ${items.map(i => `<li>${i.qty}× ${i.name}${i.options ? ` <span class="order-tag">${i.options}</span>` : ''} <span class="history-meta">(${i.kitchen})</span></li>`).join('')}
           </ul>
           <div class="order-actions">
+            <button class="btn-send-back" data-id="${o.orderId}">Send Back to Kitchen</button>
             <button class="btn-ready" data-id="${o.orderId}">Mark Ready</button>
           </div>
         </div>
@@ -106,11 +107,29 @@
     }
 
     document.getElementById('queueList').addEventListener('click', async (e) => {
-      const btn = e.target.closest('button[data-id]');
+      const readyBtn = e.target.closest('button.btn-ready');
+      const sendBackBtn = e.target.closest('button.btn-send-back');
+      const btn = readyBtn || sendBackBtn;
       if (!btn) return;
       const orderId = btn.dataset.id;
       const order = ordersState.find(o => o.orderId === orderId);
       if (!order) return;
+
+      if (sendBackBtn) {
+        if (!confirm('Send this order back to the kitchen? This undoes "Start" and it will disappear from Assembly until a kitchen starts it again.')) return;
+        pendingUpdates[orderId] = 'received';
+        ordersState = ordersState.filter(o => o.orderId !== orderId);
+        render();
+        try {
+          await sendBackToKitchen(orderId);
+          delete pendingUpdates[orderId];
+        } catch (err) {
+          delete pendingUpdates[orderId];
+          alert('Could not send that order back — please try again.');
+          refresh();
+        }
+        return;
+      }
 
       // Warn (but don't hard-block) if one of the kitchens this order
       // needs hasn't actually started their part yet — easy to miss

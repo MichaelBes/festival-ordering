@@ -263,7 +263,17 @@
           fresh[id] = pendingMenuUpdates[id];
         });
         menuStatusCache = fresh;
-        renderMenuStatusList();
+
+        // Don't rebuild the whole list while someone's mid-keystroke in
+        // a note field — that would wipe out whatever they haven't
+        // saved yet. The data itself still stays fresh in the
+        // background; the screen just catches up once nothing's being
+        // typed (e.g. they click a status button, or click elsewhere).
+        const active = document.activeElement;
+        const isTypingNote = active && active.matches && active.matches('input.menu-status-note');
+        if (!isTypingNote) {
+          renderMenuStatusList();
+        }
       } catch (err) {
         console.error('Menu status refresh failed', err);
       }
