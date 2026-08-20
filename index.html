@@ -32,8 +32,9 @@
     <div class="welcome-card">
       <h1>Welcome!</h1>
       <div class="tagline">Enter your name to start your order</div>
-      <label for="customerNameWelcome">Your name</label>
-      <input type="text" id="customerNameWelcome" placeholder="e.g. Mina" maxlength="30" autocomplete="off">
+      <label for="customerNameWelcome">Your full name</label>
+      <input type="text" id="customerNameWelcome" placeholder="e.g. Mina Beshara" maxlength="30" autocomplete="off">
+      <div class="field-hint" id="nameHint"></div>
       <label for="customerPhoneWelcome" style="margin-top:14px;">Phone number</label>
       <input type="tel" id="customerPhoneWelcome" placeholder="For order updates" maxlength="20" autocomplete="off">
       <label class="sms-consent-checkbox-label">
@@ -288,11 +289,16 @@
     const phoneInput = document.getElementById('customerPhoneWelcome');
     const continueBtn = document.getElementById('continueBtn');
 
+    const nameHint = document.getElementById('nameHint');
+    function hasFullName(value) {
+      return value.trim().split(/\s+/).filter(Boolean).length >= 2;
+    }
     function validateWelcomeForm() {
-      const hasName = nameInput.value.trim().length > 0;
+      const hasName = hasFullName(nameInput.value);
       const phoneDigits = phoneInput.value.replace(/\D/g, '');
       const hasValidPhone = phoneDigits.length >= 10;
       continueBtn.disabled = !(hasName && hasValidPhone);
+      nameHint.textContent = (nameInput.value.trim().length > 0 && !hasName) ? 'Please enter first and last name' : '';
     }
     nameInput.addEventListener('input', validateWelcomeForm);
     phoneInput.addEventListener('input', validateWelcomeForm);

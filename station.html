@@ -19,8 +19,9 @@
     <div class="welcome-card">
       <h1>Welcome!</h1>
       <div class="tagline">Enter your name to start your order</div>
-      <label for="customerNameWelcome">Your name</label>
-      <input type="text" id="customerNameWelcome" placeholder="e.g. Mina" maxlength="30" autocomplete="off">
+      <label for="customerNameWelcome">Your full name</label>
+      <input type="text" id="customerNameWelcome" placeholder="e.g. George Hanna" maxlength="30" autocomplete="off">
+      <div class="field-hint" id="nameHint"></div>
       <label for="customerPhoneWelcome" style="margin-top:14px;">Phone number (optional)</label>
       <input type="tel" id="customerPhoneWelcome" placeholder="For order updates, if enabled" maxlength="20" autocomplete="off">
       <label class="sms-consent-checkbox-label">
@@ -223,9 +224,17 @@
     const nameInput = document.getElementById('customerNameWelcome');
     const phoneInput = document.getElementById('customerPhoneWelcome');
     const continueBtn = document.getElementById('continueBtn');
+    const nameHint = document.getElementById('nameHint');
+
+    function hasFullName(value) {
+      return value.trim().split(/\s+/).filter(Boolean).length >= 2;
+    }
 
     nameInput.addEventListener('input', () => {
-      continueBtn.disabled = nameInput.value.trim().length === 0;
+      const value = nameInput.value;
+      const valid = hasFullName(value);
+      continueBtn.disabled = !valid;
+      nameHint.textContent = (value.trim().length > 0 && !valid) ? 'Please enter first and last name' : '';
     });
     nameInput.focus();
 
