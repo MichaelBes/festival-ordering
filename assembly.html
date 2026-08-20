@@ -19,6 +19,19 @@
     <div id="queueList"></div>
   </div>
 
+  <!-- Shown only when an order needs both kitchens, so it's clear
+       which portion(s) are being sent back before anything happens. -->
+  <div class="modal-backdrop" id="sendBackModal" style="display:none;">
+    <div class="modal">
+      <h2>Send Back to Which Kitchen?</h2>
+      <p>This order has items from both kitchens.</p>
+      <button class="kitchen-choice-btn" id="sendBackMainBtn">Main Kitchen Only</button>
+      <button class="kitchen-choice-btn" id="sendBackSandwichBtn">Sandwich Kitchen Only</button>
+      <button class="kitchen-choice-btn" id="sendBackBothBtn">Both Kitchens</button>
+      <div class="cancel-link" id="sendBackCancelBtn">Cancel</div>
+    </div>
+  </div>
+
   <script src="config.js"></script>
   <script src="api.js"></script>
   <script>
@@ -63,14 +76,16 @@
               <span class="order-id">${o.orderId}</span>
               ${o.paymentMethod === 'cash' ? '<span class="order-tag">CASH</span>' : ''}${o.station === 'online' ? '<span class="order-tag">ONLINE</span>' : ''}
             </span>
-            <span class="order-elapsed">${timeAgo(o.timestamp)}</span>
+            <span class="order-top-right">
+              <span class="order-elapsed">${timeAgo(o.timestamp)}</span>
+              <button class="btn-send-back" data-id="${o.orderId}" title="Send back to kitchen">↩ Send Back</button>
+            </span>
           </div>
           ${o.notes ? `<div class="order-notes-alert">⚠️ ${o.notes}</div>` : ''}
           <ul class="order-items-list">
             ${items.map(i => `<li>${i.qty}× ${i.name}${i.options ? ` <span class="order-tag">${i.options}</span>` : ''} <span class="history-meta">(${i.kitchen})</span></li>`).join('')}
           </ul>
           <div class="order-actions">
-            <button class="btn-send-back" data-id="${o.orderId}">Send Back to Kitchen</button>
             <button class="btn-ready" data-id="${o.orderId}">Mark Ready</button>
           </div>
         </div>
@@ -106,6 +121,61 @@
       }
     }
 
+    let sendBackOrderId = null;
+
+    // Whether the order would still have something started (and so
+    // should stay visible on Assembly) after sending back a given
+    // kitchen's portion — a partial send-back on a dual-kitchen order
+    // shouldn't make the order vanish if the other side is still done.
+    function willStayInProgress(order, kitchen) {
+      const mainAfter = (kitchen === 'main' || kitchen === 'both') ? false : order.mainStarted;
+      const sandwichAfter = (kitchen === 'sandwich' || kitchen === 'both') ? false : order.sandwichStarted;
+      return mainAfter || sandwichAfter;
+    }
+
+    async function performSendBack(orderId, kitchen) {
+      const order = ordersState.find(o => o.orderId === orderId);
+      if (!order) return;
+
+      const staysVisible = willStayInProgress(order, kitchen);
+      if (kitchen === 'main' || kitchen === 'both') order.mainStarted = false;
+      if (kitchen === 'sandwich' || kitchen === 'both') order.sandwichStarted = false;
+      if (!staysVisible) {
+        ordersState = ordersState.filter(o => o.orderId !== orderId);
+      }
+      render();
+
+      try {
+        await sendBackToKitchen(orderId, kitchen);
+        if (staysVisible) refresh();
+      } catch (err) {
+        alert('Could not send that order back — please try again.');
+        refresh();
+      }
+    }
+
+    function hideSendBackModal() {
+      document.getElementById('sendBackModal').style.display = 'none';
+      sendBackOrderId = null;
+    }
+
+    document.getElementById('sendBackMainBtn').addEventListener('click', () => {
+      const id = sendBackOrderId;
+      hideSendBackModal();
+      performSendBack(id, 'main');
+    });
+    document.getElementById('sendBackSandwichBtn').addEventListener('click', () => {
+      const id = sendBackOrderId;
+      hideSendBackModal();
+      performSendBack(id, 'sandwich');
+    });
+    document.getElementById('sendBackBothBtn').addEventListener('click', () => {
+      const id = sendBackOrderId;
+      hideSendBackModal();
+      performSendBack(id, 'both');
+    });
+    document.getElementById('sendBackCancelBtn').addEventListener('click', hideSendBackModal);
+
     document.getElementById('queueList').addEventListener('click', async (e) => {
       const readyBtn = e.target.closest('button.btn-ready');
       const sendBackBtn = e.target.closest('button.btn-send-back');
@@ -116,18 +186,15 @@
       if (!order) return;
 
       if (sendBackBtn) {
-        if (!confirm('Send this order back to the kitchen? This undoes "Start" and it will disappear from Assembly until a kitchen starts it again.')) return;
-        pendingUpdates[orderId] = 'received';
-        ordersState = ordersState.filter(o => o.orderId !== orderId);
-        render();
-        try {
-          await sendBackToKitchen(orderId);
-          delete pendingUpdates[orderId];
-        } catch (err) {
-          delete pendingUpdates[orderId];
-          alert('Could not send that order back — please try again.');
-          refresh();
+        if (order.needsMain && order.needsSandwich) {
+          // Ambiguous — could be either kitchen's mistake, so ask.
+          sendBackOrderId = orderId;
+          document.getElementById('sendBackModal').style.display = 'flex';
+          return;
         }
+        const onlyKitchen = order.needsMain ? 'main' : 'sandwich';
+        if (!confirm(`Send this order back to the ${onlyKitchen === 'main' ? 'Main' : 'Sandwich'} Kitchen? This undoes "Start."`)) return;
+        performSendBack(orderId, onlyKitchen);
         return;
       }
 

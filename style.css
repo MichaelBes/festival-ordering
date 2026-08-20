@@ -315,6 +315,14 @@ h1, h2, h3, .display {
 }
 .modal h2 { margin-top: 0; color: var(--maroon); }
 .modal p { color: var(--cream-dim); line-height: 1.5; }
+.kitchen-choice-btn {
+  display: block; width: 100%; box-sizing: border-box;
+  background: var(--bg-panel-2); border: 1.5px solid var(--gold-deep);
+  color: var(--maroon); font-weight: 700; font-family: 'Barlow Semi Condensed';
+  padding: 14px; border-radius: 10px; margin-top: 12px; font-size: 1rem;
+}
+.kitchen-choice-btn:active { background: var(--gold-bright); color: #FFF; }
+.order-top-right { display: flex; align-items: center; gap: 10px; }
 .pay-options { display: flex; gap: 16px; margin-top: 20px; }
 .pay-btn {
   flex: 1; padding: 22px 14px; border-radius: 14px; border: 1.5px solid var(--line);
@@ -550,8 +558,8 @@ h1, h2, h3, .display {
 .btn-ready { background: var(--status-ready); color: #FFF; }
 .btn-send-back {
   background: none; border: 1.5px solid var(--cream-dim); color: var(--cream-dim);
-  flex: 0 0 auto; padding: 6px 12px !important; font-size: 0.7rem !important;
-  border-radius: 20px; align-self: center;
+  padding: 4px 10px; font-size: 0.68rem; border-radius: 20px;
+  font-family: 'Barlow Semi Condensed'; font-weight: 700;
 }
 .order-actions button:disabled { opacity: 0.5; }
 
