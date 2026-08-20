@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Order History — St. George Festival</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="glow-bar"></div>
@@ -21,8 +21,8 @@
     <div class="empty-state">Loading orders...</div>
   </div>
 
-  <script src="config.js?v=2"></script>
-  <script src="api.js?v=2"></script>
+  <script src="config.js"></script>
+  <script src="api.js"></script>
   <script>
     let allOrders = [];
 
@@ -48,9 +48,32 @@
             ${items.map(i => `<li>${i.qty}× ${i.name}${i.options ? ` <span class="order-tag">${i.options}</span>` : ''}</li>`).join('')}
           </ul>
           <div class="history-meta">${time} · $${o.total} · ${o.paymentMethod === 'cash' ? 'Cash' : 'Card'} · ${o.station === 'online' ? 'Online Order' : 'Station ' + o.station}</div>
+          ${o.status === 'completed' ? `<button class="undo-pickup-btn" data-order-id="${o.orderId}">Accidentally picked up? Undo</button>` : ''}
         </div>
       `;
     }
+
+    async function handleUndoPickup(orderId, btn) {
+      if (!confirm(`Move order ${orderId} back to Ready on the Pickup screen?`)) return;
+      btn.disabled = true;
+      btn.textContent = 'Undoing...';
+      try {
+        const result = await undoPickup(orderId);
+        if (!result.success) throw new Error(result.error || 'Could not undo pickup');
+        const order = allOrders.find(o => o.orderId === orderId);
+        if (order) order.status = 'ready';
+        render();
+      } catch (err) {
+        alert('Could not undo pickup — ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Accidentally picked up? Undo';
+      }
+    }
+
+    document.getElementById('historyList').addEventListener('click', (e) => {
+      const btn = e.target.closest('.undo-pickup-btn');
+      if (btn) handleUndoPickup(btn.dataset.orderId, btn);
+    });
 
     function render() {
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
