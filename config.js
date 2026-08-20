@@ -4,7 +4,7 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // Your menu. id must be unique. price is in dollars.
 // "kitchen" tells the system which prep screen this item shows up on:
@@ -50,7 +50,7 @@ const MENU = [
   {
     id: "chicken-plate", name: "Chicken Plate", price: 15, category: "Plates", kitchen: "main",
     image: "images/chicken-plate.webp",
-    description: "1 skewer of shish tawook (grilled chicken) served with rice, 5 pieces of stuffed grape leaves (mahshi), side salad, and 1 goulash pastry.",
+    description: "2 pieces of chicken (shish tawook) served with rice, 5 pieces of stuffed grape leaves (mahshi), side salad, and 1 goulash pastry.",
     isMeal: true,
   },
   // Moved here from Sandwiches — the new official menu lists this
@@ -106,7 +106,7 @@ const MENU = [
 
   // ---- Sides ----
   {
-    id: "stuffed-grape-leaves", name: "Stuffed Grape Leaves (Mahshi)", price: 4, category: "Sides", kitchen: "main",
+    id: "stuffed-grape-leaves", name: "Stuffed Grape Leaves (Mahshi)", price: 5, category: "Sides", kitchen: "main",
     image: "images/stuffed-grape-leaves.webp",
     description: "10 pieces of grape leaves stuffed with rice and ground beef.",
   },
@@ -136,6 +136,14 @@ const MENU = [
     image: "",
     description: "One additional piece of grilled chicken (shish tawook). $2 each when added alongside a Combo, Kofta Plate, or Chicken Plate — $4 each on its own.",
     isAddon: true, addonPriceWithMeal: 2, addonPriceStandalone: 4,
+  },
+  {
+    id: "side-sausage", name: "Side of Sausage", price: 2, category: "Sides", kitchen: "main",
+    image: "", description: "A side portion of Egyptian-style spiced sausage.",
+  },
+  {
+    id: "side-rice", name: "Side of Rice", price: 2, category: "Sides", kitchen: "main",
+    image: "", description: "A side portion of rice.",
   },
 
   // Desserts removed entirely — ordered at a different location now.
@@ -205,5 +213,5 @@ const CARD_FEE_RATE = 0.03;
 // Get both from the same Square Developer Dashboard app:
 // Credentials page (Application ID) and Locations page (Location ID
 // — same value already in Code.gs's SQUARE_LOCATION_ID).
-const SQUARE_APPLICATION_ID = "sq0idp-nk75rLZVR1aMkVOO_vry3w";
-const SQUARE_LOCATION_ID_PUBLIC = "L6VV44AAQ0SC3";
+const SQUARE_APPLICATION_ID = "PASTE_YOUR_SQUARE_APPLICATION_ID_HERE";
+const SQUARE_LOCATION_ID_PUBLIC = "PASTE_YOUR_LOCATION_ID_HERE";
