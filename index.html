@@ -290,6 +290,7 @@
     const continueBtn = document.getElementById('continueBtn');
 
     const nameHint = document.getElementById('nameHint');
+    let nameFieldBlurred = false;
     function hasFullName(value) {
       return value.trim().split(/\s+/).filter(Boolean).length >= 2;
     }
@@ -298,9 +299,10 @@
       const phoneDigits = phoneInput.value.replace(/\D/g, '');
       const hasValidPhone = phoneDigits.length >= 10;
       continueBtn.disabled = !(hasName && hasValidPhone);
-      nameHint.textContent = (nameInput.value.trim().length > 0 && !hasName) ? 'Please enter first and last name' : '';
+      nameHint.textContent = (nameFieldBlurred && nameInput.value.trim().length > 0 && !hasName) ? 'Please enter first and last name' : '';
     }
     nameInput.addEventListener('input', validateWelcomeForm);
+    nameInput.addEventListener('blur', () => { nameFieldBlurred = true; validateWelcomeForm(); });
     phoneInput.addEventListener('input', validateWelcomeForm);
     nameInput.focus();
 
@@ -726,6 +728,8 @@
       smsConsent = false;
       nameInput.value = '';
       phoneInput.value = '';
+      nameFieldBlurred = false;
+      nameHint.textContent = '';
       document.getElementById('smsConsentCheckbox').checked = false;
       document.getElementById('orderNotes').value = '';
       continueBtn.disabled = true;
