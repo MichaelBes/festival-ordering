@@ -4,7 +4,7 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // Your menu. id must be unique. price is in dollars.
 // "kitchen" tells the system which prep screen this item shows up on:
@@ -128,14 +128,14 @@ const MENU = [
   {
     id: "extra-kofta", name: "Extra Kofta (1 pc)", price: 4, category: "Sides", kitchen: "main",
     image: "",
-    description: "One additional piece of kofta. $2 each when added alongside a Combo, Kofta Plate, or Chicken Plate — $4 each on its own.",
-    isAddon: true, addonPriceWithMeal: 2, addonPriceStandalone: 4,
+    description: "One additional piece of kofta. $3 each when added alongside a Combo, Kofta Plate, or Chicken Plate — $4 each on its own.",
+    isAddon: true, addonPriceWithMeal: 3, addonPriceStandalone: 4,
   },
   {
     id: "extra-chicken", name: "Extra Chicken (1 pc)", price: 4, category: "Sides", kitchen: "main",
     image: "",
-    description: "One additional piece of grilled chicken (shish tawook). $2 each when added alongside a Combo, Kofta Plate, or Chicken Plate — $4 each on its own.",
-    isAddon: true, addonPriceWithMeal: 2, addonPriceStandalone: 4,
+    description: "One additional piece of grilled chicken (shish tawook). $3 each when added alongside a Combo, Kofta Plate, or Chicken Plate — $4 each on its own.",
+    isAddon: true, addonPriceWithMeal: 3, addonPriceStandalone: 4,
   },
   {
     id: "side-sausage", name: "Side of Sausage", price: 2, category: "Sides", kitchen: "main",
@@ -151,15 +151,13 @@ const MENU = [
   // ---- Snacks ----
   { id: "chips", name: "Chips", price: 1, category: "Snacks", kitchen: "main", image: "", description: "" },
 
-  // ---- $1 Drinks ----
+  // ---- Drinks ----
   {
-    id: "drinks-1", name: "$1 Drinks", price: 1, category: "$1 Drinks", kitchen: "main",
+    id: "drinks-1", name: "$1 Drinks", price: 1, category: "Drinks", kitchen: "main",
     image: "", description: "Choose from small Gatorade, bottled water, pop can, Capri Sun, or Sunny D.",
   },
-
-  // ---- $2 Drinks ----
   {
-    id: "drinks-2", name: "$2 Drinks", price: 2, category: "$2 Drinks", kitchen: "main",
+    id: "drinks-2", name: "$2 Drinks", price: 2, category: "Drinks", kitchen: "main",
     image: "", description: "Choose from ICEE sparkling water or large Gatorade.",
   },
 ];
@@ -213,5 +211,5 @@ const CARD_FEE_RATE = 0.03;
 // Get both from the same Square Developer Dashboard app:
 // Credentials page (Application ID) and Locations page (Location ID
 // — same value already in Code.gs's SQUARE_LOCATION_ID).
-const SQUARE_APPLICATION_ID = "sq0idp-nk75rLZVR1aMkVOO_vry3w";
-const SQUARE_LOCATION_ID_PUBLIC = "L6VV44AAQ0SC3";
+const SQUARE_APPLICATION_ID = "PASTE_YOUR_SQUARE_APPLICATION_ID_HERE";
+const SQUARE_LOCATION_ID_PUBLIC = "PASTE_YOUR_LOCATION_ID_HERE";
