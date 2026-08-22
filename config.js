@@ -57,7 +57,7 @@ const MENU = [
   // under Plates, not Sandwiches, which also answers the earlier open
   // question about which kitchen station should prep it.
   {
-    id: "shawarma-bowl", name: "Shawarma Bowl", price: 13, category: "Plates", kitchen: "main",
+    id: "shawarma-bowl", name: "Shawarma Bowl", price: 13, category: "Plates", kitchen: "sandwich",
     image: "images/beef-shawarma-bowl.webp",
     description: "Bed of rice, topped with roasted, shaved beef or chicken, served with salad.",
     options: [
