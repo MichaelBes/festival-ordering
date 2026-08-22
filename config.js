@@ -145,6 +145,10 @@ const MENU = [
     id: "side-rice", name: "Side of Rice", price: 2, category: "Sides", kitchen: "main",
     image: "", description: "A side portion of rice.",
   },
+  {
+  id: "side-falafel", name: "Side of Falafel", price: 3, category: "Sides", kitchen: "main",
+  image: "", description: "4 pieces of falafel.",
+  },
 
   // Desserts removed entirely — ordered at a different location now.
 
