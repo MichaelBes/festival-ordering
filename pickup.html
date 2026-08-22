@@ -41,10 +41,14 @@
     }
 
     function render() {
-      const active = ordersState
-        .filter(o => ['received', 'in_progress', 'ready'].includes(o.status))
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
+    const statusOrder = { ready: 0, in_progress: 1, received: 2 };
+    const active = ordersState
+      .filter(o => ['received', 'in_progress', 'ready'].includes(o.status))
+      .sort((a, b) => {
+        const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+        if (statusDiff !== 0) return statusDiff;
+        return new Date(a.timestamp) - new Date(b.timestamp); // oldest first within the same status
+      });
       const listEl = document.getElementById('pickupList');
       listEl.innerHTML = active.length
         ? active.map(rowHtml).join('')
