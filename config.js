@@ -4,7 +4,7 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // Your menu. id must be unique. price is in dollars.
 // "kitchen" tells the system which prep screen this item shows up on:
@@ -57,7 +57,7 @@ const MENU = [
   // under Plates, not Sandwiches, which also answers the earlier open
   // question about which kitchen station should prep it.
   {
-    id: "shawarma-bowl", name: "Shawarma Bowl", price: 13, category: "Plates", kitchen: "sandwich",
+    id: "shawarma-bowl", name: "Shawarma Bowl", price: 13, category: "Sandwiches", kitchen: "sandwich",
     image: "images/beef-shawarma-bowl.webp",
     description: "Bed of rice, topped with roasted, shaved beef or chicken, served with salad.",
     options: [
@@ -146,11 +146,19 @@ const MENU = [
     image: "", description: "A side portion of rice.",
   },
   {
-  id: "side-falafel", name: "Side of Falafel", price: 3, category: "Sides", kitchen: "main",
-  image: "", description: "4 pieces of falafel.",
+    id: "side-falafel", name: "Side of Falafel", price: 3, category: "Sides", kitchen: "main",
+    image: "", description: "4 pieces of falafel.",
   },
 
   // Desserts removed entirely — ordered at a different location now.
+
+  // ---- Smoothies ----
+  // New third kitchen station — these route to kitchen-smoothies.html.
+  { id: "smoothie-mango", name: "Mango Smoothie", price: 6, category: "Smoothies", kitchen: "smoothie", image: "", description: "" },
+  { id: "smoothie-strawberry", name: "Strawberry Shake", price: 6, category: "Smoothies", kitchen: "smoothie", image: "", description: "" },
+  { id: "smoothie-oreo", name: "Oreo Shake", price: 6, category: "Smoothies", kitchen: "smoothie", image: "", description: "" },
+  { id: "smoothie-mint-lemonade", name: "Mint Lemonade", price: 6, category: "Smoothies", kitchen: "smoothie", image: "", description: "" },
+  { id: "smoothie-asab", name: "Asab", price: 6, category: "Smoothies", kitchen: "smoothie", image: "", description: "Fresh-pressed sugarcane juice." },
 
   // ---- Snacks ----
   { id: "chips", name: "Chips", price: 1, category: "Snacks", kitchen: "main", image: "", description: "" },
@@ -214,5 +222,6 @@ const CARD_FEE_RATE = 0.03;
 // the secret Access Token in Code.gs, which never appears here.
 // Get both from the same Square Developer Dashboard app:
 // Credentials page (Application ID) and Locations page (Location ID
-const SQUARE_APPLICATION_ID = "sq0idp-nk75rLZVR1aMkVOO_vry3w";
-const SQUARE_LOCATION_ID_PUBLIC = "L6VV44AAQ0SC3";
+// — same value already in Code.gs's SQUARE_LOCATION_ID).
+const SQUARE_APPLICATION_ID = "PASTE_YOUR_SQUARE_APPLICATION_ID_HERE";
+const SQUARE_LOCATION_ID_PUBLIC = "PASTE_YOUR_LOCATION_ID_HERE";

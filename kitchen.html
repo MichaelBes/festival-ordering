@@ -82,9 +82,9 @@
     }
 
     function render() {
-      const queue = ordersState.filter(o =>
-        (KITCHEN_AREA === 'main' ? o.needsMain && !o.mainStarted : o.needsSandwich && !o.sandwichStarted)
-      );
+      const needsField = 'needs' + KITCHEN_AREA[0].toUpperCase() + KITCHEN_AREA.slice(1);
+      const startedField = KITCHEN_AREA + 'Started';
+      const queue = ordersState.filter(o => o[needsField] && !o[startedField]);
       document.getElementById('queueCount').textContent = queue.length;
       document.getElementById('queueList').innerHTML = queue.length
         ? queue.map(orderCardHtml).join('')

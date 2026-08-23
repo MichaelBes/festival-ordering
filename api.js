@@ -95,8 +95,16 @@ async function undoPickup(orderId) {
   return postToBackend({ action: "undoPickup", orderId });
 }
 
-async function sendBackToKitchen(orderId, kitchen) {
-  return postToBackend({ action: "sendBackToKitchen", orderId, kitchen });
+async function undoReady(orderId) {
+  return postToBackend({ action: "undoReady", orderId });
+}
+
+async function sendBackToKitchen(orderId, kitchens) {
+  return postToBackend({ action: "sendBackToKitchen", orderId, kitchens });
+}
+
+async function markSmoothiePickedUp(orderId) {
+  return postToBackend({ action: "markSmoothiePickedUp", orderId });
 }
 
 // Called by the Main Kitchen or Sandwich Kitchen screen when staff tap

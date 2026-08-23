@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smoothies — St. George Festival</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="style.css?v=3">
+</head>
+<body class="pickup">
+  <div class="glow-bar"></div>
+  <div class="topbar">
+    <h1>Smoothies</h1>
+    <a class="history-link" href="history.html">Previous Orders →</a>
+  </div>
+
+  <div class="pickup-list" id="pickupList"></div>
+
+  <script src="config.js?v=3"></script>
+  <script src="api.js?v=3"></script>
+  <script>
+    // This screen works differently from Main/Sandwich Kitchen — orders
+    // appear here as soon as they come in (no "Start" step), and
+    // tapping one marks it picked up directly. It deliberately skips
+    // Assembly and Pickup entirely. See markSmoothiePickedUp in
+    // Code.gs for how this stays isolated from mixed orders that also
+    // have food items going through the normal kitchen flow.
+    let ordersState = [];
+    let pendingRemovals = new Set(); // orderIds being marked picked up but not yet confirmed
+
+    function rowHtml(o) {
+      return `
+        <div class="pickup-row" data-id="${o.orderId}">
+          <div class="pickup-row-left">
+            <span class="pickup-name">${o.customerName || '—'}</span>
+            <span class="pickup-order-id">${o.orderId}</span>
+          </div>
+          <span class="status-pill received">Ready to Hand Off</span>
+        </div>
+      `;
+    }
+
+    function render() {
+      const active = ordersState
+        .filter(o => o.needsSmoothie && !o.smoothieStarted)
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+      const listEl = document.getElementById('pickupList');
+      listEl.innerHTML = active.length
+        ? active.map(rowHtml).join('')
+        : '<div class="empty-state">No smoothie orders right now</div>';
+    }
+
+    async function refresh() {
+      try {
+        const data = await fetchOrders('');
+        // Don't let a background refresh bring back an order we just
+        // marked picked up, before that change has saved to the Sheet.
+        ordersState = data.orders.filter(o => !pendingRemovals.has(o.orderId));
+        render();
+      } catch (err) {
+        console.error('Refresh failed', err);
+      }
+    }
+
+    // Tap a row to mark it picked up — removes instantly, syncs with
+    // the server in the background.
+    document.getElementById('pickupList').addEventListener('click', async (e) => {
+      const row = e.target.closest('.pickup-row');
+      if (!row) return;
+      const orderId = row.dataset.id;
+      pendingRemovals.add(orderId);
+      ordersState = ordersState.filter(o => o.orderId !== orderId);
+      render();
+
+      try {
+        await markSmoothiePickedUp(orderId);
+        pendingRemovals.delete(orderId); // confirmed — safe for refreshes now
+      } catch (err) {
+        pendingRemovals.delete(orderId);
+        refresh(); // bring it back if the update failed
+      }
+    });
+
+    refresh();
+    setInterval(refresh, POLL_INTERVAL_MS);
+  </script>
+</body>
+</html>

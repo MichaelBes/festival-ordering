@@ -24,10 +24,8 @@
   <div class="modal-backdrop" id="sendBackModal" style="display:none;">
     <div class="modal">
       <h2>Send Back to Which Kitchen?</h2>
-      <p>This order has items from both kitchens.</p>
-      <button class="kitchen-choice-btn" id="sendBackMainBtn">Main Kitchen Only</button>
-      <button class="kitchen-choice-btn" id="sendBackSandwichBtn">Sandwich Kitchen Only</button>
-      <button class="kitchen-choice-btn" id="sendBackBothBtn">Both Kitchens</button>
+      <p>This order has items from more than one kitchen.</p>
+      <div id="sendBackChoices"></div>
       <div class="cancel-link" id="sendBackCancelBtn">Cancel</div>
     </div>
   </div>
@@ -123,30 +121,44 @@
 
     let sendBackOrderId = null;
 
-    // Whether the order would still have something started (and so
-    // should stay visible on Assembly) after sending back a given
-    // kitchen's portion — a partial send-back on a dual-kitchen order
-    // shouldn't make the order vanish if the other side is still done.
-    function willStayInProgress(order, kitchen) {
-      const mainAfter = (kitchen === 'main' || kitchen === 'both') ? false : order.mainStarted;
-      const sandwichAfter = (kitchen === 'sandwich' || kitchen === 'both') ? false : order.sandwichStarted;
-      return mainAfter || sandwichAfter;
+    // Smoothies are handled entirely on their own screen (order →
+    // tap to mark picked up) and never touch Assembly at all, so this
+    // deliberately only lists the two kitchens Assembly actually deals
+    // with.
+    const ALL_KITCHENS = [
+      { key: 'main', label: 'Main Kitchen' },
+      { key: 'sandwich', label: 'Sandwich Kitchen' },
+    ];
+
+    function neededKitchensFor(order) {
+      return ALL_KITCHENS.filter(k => order['needs' + k.key[0].toUpperCase() + k.key.slice(1)]);
     }
 
-    async function performSendBack(orderId, kitchen) {
+    // Whether the order would still have something started (and so
+    // should stay visible on Assembly) after sending back the given
+    // kitchen(s) — a partial send-back on a multi-kitchen order
+    // shouldn't make the order vanish if another side is still done.
+    function willStayInProgress(order, kitchens) {
+      return ALL_KITCHENS.some(k => {
+        const startedField = k.key + 'Started';
+        const isBeingSentBack = kitchens.includes(k.key);
+        return isBeingSentBack ? false : !!order[startedField];
+      });
+    }
+
+    async function performSendBack(orderId, kitchens) {
       const order = ordersState.find(o => o.orderId === orderId);
       if (!order) return;
 
-      const staysVisible = willStayInProgress(order, kitchen);
-      if (kitchen === 'main' || kitchen === 'both') order.mainStarted = false;
-      if (kitchen === 'sandwich' || kitchen === 'both') order.sandwichStarted = false;
+      const staysVisible = willStayInProgress(order, kitchens);
+      kitchens.forEach(k => { order[k + 'Started'] = false; });
       if (!staysVisible) {
         ordersState = ordersState.filter(o => o.orderId !== orderId);
       }
       render();
 
       try {
-        await sendBackToKitchen(orderId, kitchen);
+        await sendBackToKitchen(orderId, kitchens);
         if (staysVisible) refresh();
       } catch (err) {
         alert('Could not send that order back — please try again.');
@@ -156,23 +168,29 @@
 
     function hideSendBackModal() {
       document.getElementById('sendBackModal').style.display = 'none';
+      document.getElementById('sendBackChoices').innerHTML = '';
       sendBackOrderId = null;
     }
 
-    document.getElementById('sendBackMainBtn').addEventListener('click', () => {
+    function openSendBackModal(order) {
+      sendBackOrderId = order.orderId;
+      const needed = neededKitchensFor(order);
+      const choicesEl = document.getElementById('sendBackChoices');
+      let html = needed.map(k =>
+        `<button class="kitchen-choice-btn" data-kitchens="${k.key}">${k.label} Only</button>`
+      ).join('');
+      html += `<button class="kitchen-choice-btn" data-kitchens="${needed.map(k => k.key).join(',')}">All (${needed.map(k => k.label).join(', ')})</button>`;
+      choicesEl.innerHTML = html;
+      document.getElementById('sendBackModal').style.display = 'flex';
+    }
+
+    document.getElementById('sendBackChoices').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-kitchens]');
+      if (!btn) return;
       const id = sendBackOrderId;
+      const kitchens = btn.dataset.kitchens.split(',');
       hideSendBackModal();
-      performSendBack(id, 'main');
-    });
-    document.getElementById('sendBackSandwichBtn').addEventListener('click', () => {
-      const id = sendBackOrderId;
-      hideSendBackModal();
-      performSendBack(id, 'sandwich');
-    });
-    document.getElementById('sendBackBothBtn').addEventListener('click', () => {
-      const id = sendBackOrderId;
-      hideSendBackModal();
-      performSendBack(id, 'both');
+      performSendBack(id, kitchens);
     });
     document.getElementById('sendBackCancelBtn').addEventListener('click', hideSendBackModal);
 
@@ -186,25 +204,25 @@
       if (!order) return;
 
       if (sendBackBtn) {
-        if (order.needsMain && order.needsSandwich) {
-          // Ambiguous — could be either kitchen's mistake, so ask.
-          sendBackOrderId = orderId;
-          document.getElementById('sendBackModal').style.display = 'flex';
+        const needed = neededKitchensFor(order);
+        if (needed.length > 1) {
+          // Ambiguous — could be any of several kitchens' mistake, so ask.
+          openSendBackModal(order);
           return;
         }
-        const onlyKitchen = order.needsMain ? 'main' : 'sandwich';
-        if (!confirm(`Send this order back to the ${onlyKitchen === 'main' ? 'Main' : 'Sandwich'} Kitchen? This undoes "Start."`)) return;
-        performSendBack(orderId, onlyKitchen);
+        const only = needed[0];
+        if (!only) return;
+        if (!confirm(`Send this order back to ${only.label}? This undoes "Start."`)) return;
+        performSendBack(orderId, [only.key]);
         return;
       }
 
       // Warn (but don't hard-block) if one of the kitchens this order
       // needs hasn't actually started their part yet — easy to miss
       // when an order shows up here as soon as just one kitchen starts.
-      if (order.needsMain && !order.mainStarted) {
-        if (!confirm('Main Kitchen hasn\'t started this order yet. Mark it ready anyway?')) return;
-      } else if (order.needsSandwich && !order.sandwichStarted) {
-        if (!confirm('Sandwich Kitchen hasn\'t started this order yet. Mark it ready anyway?')) return;
+      const notStarted = neededKitchensFor(order).find(k => !order[k.key + 'Started']);
+      if (notStarted) {
+        if (!confirm(`${notStarted.label} hasn't started this order yet. Mark it ready anyway?`)) return;
       }
 
       pendingUpdates[orderId] = 'ready';
