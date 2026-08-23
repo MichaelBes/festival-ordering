@@ -573,7 +573,13 @@ h1, h2, h3, .display {
 .order-actions button:disabled { opacity: 0.5; }
 
 /* ============ PICKUP SCREEN — row list ============ */
-.pickup-list { padding: 8px 24px 24px; }
+.pickup-list {
+  padding: 8px 24px 24px;
+  height: calc(100vh - 61px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
 .pickup-row {
   display: flex; align-items: center; justify-content: space-between;
   background: var(--bg-card); border: 1px solid var(--line);
