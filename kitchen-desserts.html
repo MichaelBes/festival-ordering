@@ -29,13 +29,19 @@
     let pendingRemovals = new Set(); // orderIds being marked picked up but not yet confirmed
 
     function rowHtml(o) {
+      const myItems = (o.items || []).filter(i => i.kitchen === 'dessert');
       return `
-        <div class="pickup-row" data-id="${o.orderId}">
-          <div class="pickup-row-left">
-            <span class="pickup-name">${o.customerName || '—'}</span>
-            <span class="pickup-order-id">${o.orderId}</span>
+        <div class="pickup-row pickup-row-with-items" data-id="${o.orderId}">
+          <div class="pickup-row-top">
+            <div class="pickup-row-left">
+              <span class="pickup-name">${o.customerName || '—'}</span>
+              <span class="pickup-order-id">${o.orderId}</span>
+            </div>
+            <span class="status-pill received">Ready to Hand Off</span>
           </div>
-          <span class="status-pill received">Ready to Hand Off</span>
+          <ul class="order-items-list">
+            ${myItems.map(i => `<li>${i.qty}× ${i.name}${i.options ? ` <span class="order-tag">${i.options}</span>` : ''}</li>`).join('')}
+          </ul>
         </div>
       `;
     }
