@@ -33,8 +33,11 @@
     };
 
     function cardHtml(o) {
-      const items = Array.isArray(o.items) ? o.items : [];
+      const items = (Array.isArray(o.items) ? o.items : []).filter(i => i.kitchen === 'smoothie');
+      const subtotal = items.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.qty) || 0), 0);
       const time = new Date(o.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const pillClass = o.smoothieStarted ? 'completed' : 'ready';
+      const pillLabel = o.smoothieStarted ? 'Picked Up' : 'Ready to Hand Off';
       return `
         <div class="history-card">
           <div class="history-card-top">
@@ -42,12 +45,12 @@
               <span class="order-name">${o.customerName || '—'}</span>
               <span class="order-id">${o.orderId}</span>
             </span>
-            <span class="status-pill ${o.status}">${STATUS_LABEL[o.status] || o.status}</span>
+            <span class="status-pill ${pillClass}">${pillLabel}</span>
           </div>
           <ul class="order-items-list">
             ${items.map(i => `<li>${i.qty}× ${i.name}${i.options ? ` <span class="order-tag">${i.options}</span>` : ''}</li>`).join('')}
           </ul>
-          <div class="history-meta">${time} · $${o.total} · ${o.paymentMethod === 'cash' ? 'Cash' : 'Card'} · ${o.station === 'online' ? 'Online Order' : 'Station ' + o.station}</div>
+          <div class="history-meta">${time} · $${subtotal.toFixed(2)} · ${o.paymentMethod === 'cash' ? 'Cash' : 'Card'} · ${o.station === 'online' ? 'Online Order' : 'Station ' + o.station}</div>
           ${o.smoothieStarted ? `<button class="undo-pickup-btn" data-order-id="${o.orderId}">Accidentally picked up? Undo</button>` : ''}
         </div>
       `;
