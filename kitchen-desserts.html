@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Smoothies — St. George Festival</title>
+<title>Desserts — St. George Festival</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="style.css?v=3">
@@ -10,8 +10,8 @@
 <body class="pickup">
   <div class="glow-bar"></div>
   <div class="topbar">
-    <h1>Smoothies</h1>
-    <a class="history-link" href="history-smoothies.html">Previous Orders →</a>
+    <h1>Desserts</h1>
+    <a class="history-link" href="history-desserts.html">Previous Orders →</a>
   </div>
 
   <div class="pickup-list" id="pickupList"></div>
@@ -22,7 +22,7 @@
     // This screen works differently from Main/Sandwich Kitchen — orders
     // appear here as soon as they come in (no "Start" step), and
     // tapping one marks it picked up directly. It deliberately skips
-    // Assembly and Pickup entirely. See markSmoothiePickedUp in
+    // Assembly and Pickup entirely. See markDessertPickedUp in
     // Code.gs for how this stays isolated from mixed orders that also
     // have food items going through the normal kitchen flow.
     let ordersState = [];
@@ -42,13 +42,13 @@
 
     function render() {
       const active = ordersState
-        .filter(o => o.needsSmoothie && !o.smoothieStarted)
+        .filter(o => o.needsDessert && !o.dessertStarted)
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
       const listEl = document.getElementById('pickupList');
       listEl.innerHTML = active.length
         ? active.map(rowHtml).join('')
-        : '<div class="empty-state">No smoothie orders right now</div>';
+        : '<div class="empty-state">No dessert orders right now</div>';
     }
 
     async function refresh() {
@@ -74,7 +74,7 @@
       render();
 
       try {
-        await markSmoothiePickedUp(orderId);
+        await markDessertPickedUp(orderId);
         pendingRemovals.delete(orderId); // confirmed — safe for refreshes now
       } catch (err) {
         pendingRemovals.delete(orderId);

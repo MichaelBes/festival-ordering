@@ -107,6 +107,10 @@ async function markSmoothiePickedUp(orderId) {
   return postToBackend({ action: "markSmoothiePickedUp", orderId });
 }
 
+async function markDessertPickedUp(orderId) {
+  return postToBackend({ action: "markDessertPickedUp", orderId });
+}
+
 // Called by the Main Kitchen or Sandwich Kitchen screen when staff tap
 // "Start" on an order — marks that kitchen's portion as started.
 async function startOrderPortion(orderId, kitchen) {
