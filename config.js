@@ -4,7 +4,7 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // Your menu. id must be unique. price is in dollars.
 // "kitchen" tells the system which prep screen this item shows up on:
@@ -167,22 +167,22 @@ const MENU = [
 
   // ---- Smoothies ----
   // New third kitchen station — these route to kitchen-smoothies.html.
-  { id: "smoothie-mango", name: "Mango Smoothie", price: 6, category: "Smoothies", kitchen: "smoothie", image: "images/smoothie-mango.webp", description: "" },
-  { id: "smoothie-strawberry", name: "Strawberry Shake", price: 6, category: "Smoothies", kitchen: "smoothie", image: "images/smoothie-strawberry.webp", description: "" },
-  { id: "smoothie-oreo", name: "Oreo Shake", price: 6, category: "Smoothies", kitchen: "smoothie", image: "images/smoothie-oreo.webp", description: "" },
-  { id: "smoothie-mint-lemonade", name: "Mint Lemonade", price: 6, category: "Smoothies", kitchen: "smoothie", image: "images/smoothie-mint-lemonade.webp", description: "" },
-  { id: "smoothie-asab", name: "Asab", price: 6, category: "Smoothies", kitchen: "smoothie", image: "images/smoothie-asab.webp", description: "Fresh-pressed sugarcane juice." },
+  { id: "smoothie-mango", name: "Mango Smoothie", price: 6, category: "Smoothies and Juices", kitchen: "smoothie", image: "images/smoothie-mango.webp", description: "" },
+  { id: "smoothie-strawberry", name: "Strawberry Shake", price: 6, category: "Smoothies and Juices", kitchen: "smoothie", image: "images/smoothie-strawberry.webp", description: "" },
+  { id: "smoothie-oreo", name: "Oreo Shake", price: 6, category: "Smoothies and Juices", kitchen: "smoothie", image: "images/smoothie-oreo.webp", description: "" },
+  { id: "smoothie-mint-lemonade", name: "Mint Lemonade", price: 6, category: "Smoothies and Juices", kitchen: "smoothie", image: "images/smoothie-mint-lemonade.webp", description: "" },
+  { id: "smoothie-asab", name: "Asab (Sugarcane Juice)", price: 6, category: "Smoothies and Juices", kitchen: "smoothie", image: "images/smoothie-asab.webp", description: "Freshly squeezed sugarcane juice." },
 
   // ---- Snacks ----
   { id: "chips", name: "Chips", price: 1, category: "Snacks", kitchen: "main", image: "", description: "" },
 
   // ---- Drinks ----
   {
-    id: "drinks-1", name: "$1 Drinks", price: 1, category: "Drinks", kitchen: "main",
+    id: "drinks-1", name: "$1 Drinks", price: 1, category: "Drinks", kitchen: "drinks",
     image: "", description: "Choose from small Gatorade, bottled water, pop can, Capri Sun, or Sunny D.",
   },
   {
-    id: "drinks-2", name: "$2 Drinks", price: 2, category: "Drinks", kitchen: "main",
+    id: "drinks-2", name: "$2 Drinks", price: 2, category: "Drinks", kitchen: "drinks",
     image: "", description: "Choose from ICEE sparkling water or large Gatorade.",
   },
 ];
@@ -236,5 +236,5 @@ const CARD_FEE_RATE = 0.03;
 // Get both from the same Square Developer Dashboard app:
 // Credentials page (Application ID) and Locations page (Location ID
 // — same value already in Code.gs's SQUARE_LOCATION_ID).
-const SQUARE_APPLICATION_ID = "sq0idp-nk75rLZVR1aMkVOO_vry3w";
-const SQUARE_LOCATION_ID_PUBLIC = "L6VV44AAQ0SC3";
+const SQUARE_APPLICATION_ID = "PASTE_YOUR_SQUARE_APPLICATION_ID_HERE";
+const SQUARE_LOCATION_ID_PUBLIC = "PASTE_YOUR_LOCATION_ID_HERE";
