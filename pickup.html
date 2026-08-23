@@ -5,7 +5,7 @@
 <title>Order Pickup — St. George Festival</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="style.css">
+<script>document.write('<link rel="stylesheet" href="style.css?t=' + Date.now() + '">');</script>
 </head>
 <body class="pickup">
   <div class="glow-bar"></div>
@@ -16,8 +16,8 @@
 
   <div class="pickup-list" id="pickupList"></div>
 
-  <script src="config.js"></script>
-  <script src="api.js"></script>
+  <script>document.write('<script src="config.js?t=' + Date.now() + '"><\/script>');</script>
+  <script>document.write('<script src="api.js?t=' + Date.now() + '"><\/script>');</script>
   <script>
     let ordersState = [];
     let pendingRemovals = new Set(); // orderIds being marked complete but not yet confirmed
@@ -41,14 +41,16 @@
     }
 
     function render() {
-    const statusOrder = { ready: 0, in_progress: 1, received: 2 };
-    const active = ordersState
-      .filter(o => ['received', 'in_progress', 'ready'].includes(o.status))
-      .sort((a, b) => {
-        const statusDiff = statusOrder[a.status] - statusOrder[b.status];
-        if (statusDiff !== 0) return statusDiff;
-        return new Date(a.timestamp) - new Date(b.timestamp); // oldest first within the same status
-      });
+      const statusOrder = { ready: 0, in_progress: 1, received: 2 };
+      const hasRealFood = o => (o.items || []).some(i => i.kitchen === 'main' || i.kitchen === 'sandwich');
+      const active = ordersState
+        .filter(o => ['received', 'in_progress', 'ready'].includes(o.status) && hasRealFood(o))
+        .sort((a, b) => {
+          const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+          if (statusDiff !== 0) return statusDiff;
+          return new Date(a.timestamp) - new Date(b.timestamp); // oldest first within the same status
+        });
+
       const listEl = document.getElementById('pickupList');
       listEl.innerHTML = active.length
         ? active.map(rowHtml).join('')
