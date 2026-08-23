@@ -4,7 +4,7 @@
 
 // After you deploy the Apps Script (see README step 3), paste
 // the Web App URL it gives you here:
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcG9umOIZjlfBbraFOwIDPXpHhCfrvZ4m9RW9GtVsqup6BlmBJQaRc2Ugj-yBbGQ0k/exec";
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // Your menu. id must be unique. price is in dollars.
 // "kitchen" tells the system which prep screen this item shows up on:
@@ -153,25 +153,25 @@ const MENU = [
   // ---- Desserts ----
   // New fourth kitchen station — these route to kitchen-desserts.html,
   // same pattern as Smoothies (order in -> tap to mark picked up).
-  { id: "dessert-konafa-mango", name: "Konafa Box with Mango", price: 5, category: "Desserts", kitchen: "dessert", image: "", description: "" },
-  { id: "dessert-rice-pudding", name: "Rice Pudding", price: 3, category: "Desserts", kitchen: "dessert", image: "", description: "" },
-  { id: "dessert-basbousa-baklava", name: "Basbosa & Baklava", price: 2, category: "Desserts", kitchen: "dessert", image: "", description: "" },
-  { id: "dessert-fayesh-box", name: "Fayesh Box", price: 12, category: "Desserts", kitchen: "dessert", image: "", description: "" },
-  { id: "dessert-biscuit-box", name: "Biscuit Box", price: 10, category: "Desserts", kitchen: "dessert", image: "", description: "" },
-  { id: "dessert-feteer-pie-whole", name: "Whole Feteer Pie", price: 25, category: "Desserts", kitchen: "dessert", image: "", description: "" },
-  { id: "dessert-pastrami-feteer", name: "Pastrami Feteer", price: 10, category: "Desserts", kitchen: "dessert", image: "", description: "" },
-  { id: "dessert-baklava-nuts-box", name: "Baklava Box with Nuts", price: 5, category: "Desserts", kitchen: "dessert", image: "", description: "" },
-  { id: "dessert-exotic-box", name: "Exotic Box", price: 5, category: "Desserts", kitchen: "dessert", image: "", description: "" },
-  { id: "dessert-bitifor-box", name: "Bitifor Box", price: 5, category: "Desserts", kitchen: "dessert", image: "", description: "" },
-  { id: "dessert-inkshar-box", name: "Inkshar Box", price: 5, category: "Desserts", kitchen: "dessert", image: "", description: "" },
+  { id: "dessert-konafa-mango", name: "Konafa Box with Mango", price: 5, category: "Desserts", kitchen: "dessert", image: "images/dessert-konafa-mango.webp", description: "" },
+  { id: "dessert-rice-pudding", name: "Rice Pudding", price: 3, category: "Desserts", kitchen: "dessert", image: "images/dessert-rice-pudding.webp", description: "" },
+  { id: "dessert-basbousa-baklava", name: "Basbosa & Baklava", price: 2, category: "Desserts", kitchen: "dessert", image: "images/dessert-basbousa-baklava.webp", description: "" },
+  { id: "dessert-fayesh-box", name: "Fayesh Box", price: 12, category: "Desserts", kitchen: "dessert", image: "images/dessert-fayesh-box.webp", description: "" },
+  { id: "dessert-biscuit-box", name: "Biscuit Box", price: 10, category: "Desserts", kitchen: "dessert", image: "images/dessert-biscuit-box.webp", description: "" },
+  { id: "dessert-feteer-pie-whole", name: "Whole Feteer Pie", price: 25, category: "Desserts", kitchen: "dessert", image: "images/dessert-feteer-pie-whole.webp", description: "" },
+  { id: "dessert-pastrami-feteer", name: "Pastrami Feteer", price: 10, category: "Desserts", kitchen: "dessert", image: "images/dessert-pastrami-feteer.webp", description: "" },
+  { id: "dessert-baklava-nuts-box", name: "Baklava Box with Nuts", price: 5, category: "Desserts", kitchen: "dessert", image: "images/dessert-baklava-nuts-box.webp", description: "" },
+  { id: "dessert-exotic-box", name: "Exotic Box", price: 5, category: "Desserts", kitchen: "dessert", image: "images/dessert-exotic-box.webp", description: "" },
+  { id: "dessert-bitifor-box", name: "Bitifor Box", price: 5, category: "Desserts", kitchen: "dessert", image: "images/dessert-bitifor-box.webp", description: "" },
+  { id: "dessert-inkshar-box", name: "Inkshar Box", price: 5, category: "Desserts", kitchen: "dessert", image: "images/dessert-inkshar-box.webp", description: "" },
 
   // ---- Smoothies ----
   // New third kitchen station — these route to kitchen-smoothies.html.
-  { id: "smoothie-mango", name: "Mango Smoothie", price: 6, category: "Smoothies", kitchen: "smoothie", image: "", description: "" },
-  { id: "smoothie-strawberry", name: "Strawberry Shake", price: 6, category: "Smoothies", kitchen: "smoothie", image: "", description: "" },
-  { id: "smoothie-oreo", name: "Oreo Shake", price: 6, category: "Smoothies", kitchen: "smoothie", image: "", description: "" },
-  { id: "smoothie-mint-lemonade", name: "Mint Lemonade", price: 6, category: "Smoothies", kitchen: "smoothie", image: "", description: "" },
-  { id: "smoothie-asab", name: "Asab", price: 6, category: "Smoothies", kitchen: "smoothie", image: "", description: "Fresh-pressed sugarcane juice." },
+  { id: "smoothie-mango", name: "Mango Smoothie", price: 6, category: "Smoothies", kitchen: "smoothie", image: "images/smoothie-mango.webp", description: "" },
+  { id: "smoothie-strawberry", name: "Strawberry Shake", price: 6, category: "Smoothies", kitchen: "smoothie", image: "images/smoothie-strawberry.webp", description: "" },
+  { id: "smoothie-oreo", name: "Oreo Shake", price: 6, category: "Smoothies", kitchen: "smoothie", image: "images/smoothie-oreo.webp", description: "" },
+  { id: "smoothie-mint-lemonade", name: "Mint Lemonade", price: 6, category: "Smoothies", kitchen: "smoothie", image: "images/smoothie-mint-lemonade.webp", description: "" },
+  { id: "smoothie-asab", name: "Asab", price: 6, category: "Smoothies", kitchen: "smoothie", image: "images/smoothie-asab.webp", description: "Fresh-pressed sugarcane juice." },
 
   // ---- Snacks ----
   { id: "chips", name: "Chips", price: 1, category: "Snacks", kitchen: "main", image: "", description: "" },
@@ -236,5 +236,5 @@ const CARD_FEE_RATE = 0.03;
 // Get both from the same Square Developer Dashboard app:
 // Credentials page (Application ID) and Locations page (Location ID
 // — same value already in Code.gs's SQUARE_LOCATION_ID).
-const SQUARE_APPLICATION_ID = "sq0idp-nk75rLZVR1aMkVOO_vry3w";
-const SQUARE_LOCATION_ID_PUBLIC = "L6VV44AAQ0SC3";
+const SQUARE_APPLICATION_ID = "PASTE_YOUR_SQUARE_APPLICATION_ID_HERE";
+const SQUARE_LOCATION_ID_PUBLIC = "PASTE_YOUR_LOCATION_ID_HERE";

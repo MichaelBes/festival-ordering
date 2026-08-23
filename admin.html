@@ -55,6 +55,7 @@
           <button class="range-btn" data-range="all">All Time</button>
         </div>
       </div>
+      <div class="stat-grid" id="salesCategoryGrid" style="margin-bottom:14px;"></div>
       <div class="stat-grid" id="salesGrid"></div>
       <div id="topItemsList" style="margin-top:12px;"></div>
       <div id="byStationList" style="margin-top:12px;"></div>
@@ -104,7 +105,7 @@
     // showLoading is only true for a manual range switch — the routine
     // 5-second background poll should never visibly flicker the page.
     async function refreshStats(showLoading) {
-      const grids = [document.getElementById('statGrid'), document.getElementById('salesGrid')];
+      const grids = [document.getElementById('statGrid'), document.getElementById('salesCategoryGrid'), document.getElementById('salesGrid')];
       if (showLoading) {
         grids.forEach(g => g && g.classList.add('stats-loading'));
         document.querySelectorAll('.range-btn').forEach(b => b.disabled = true);
@@ -126,10 +127,24 @@
     }
 
     function renderSales(stats) {
-      const boxes = [
+      const categoryBoxes = [
+        { label: 'Food', value: '$' + (stats.salesByCategory.food || 0).toFixed(2) },
+        { label: 'Smoothies', value: '$' + (stats.salesByCategory.smoothies || 0).toFixed(2) },
+        { label: 'Desserts', value: '$' + (stats.salesByCategory.desserts || 0).toFixed(2) },
         { label: 'Total Sales', value: '$' + stats.totalSalesToday.toFixed(2) },
+      ];
+      document.getElementById('salesCategoryGrid').innerHTML = categoryBoxes.map(b => `
+        <div class="stat-box">
+          <div class="stat-value">${b.value}</div>
+          <div class="stat-label">${b.label}</div>
+        </div>
+      `).join('');
+
+      const boxes = [
         { label: 'Cash', value: '$' + (stats.salesByPayment.cash || 0).toFixed(2) },
         { label: 'Card', value: '$' + (stats.salesByPayment.card || 0).toFixed(2) },
+        { label: 'Avg Time to Ready (Food)', value: stats.avgReadyMinutes != null ? stats.avgReadyMinutes + ' min' : '—' },
+        { label: 'Avg Wait (Received → Picked Up)', value: stats.avgWaitMinutes != null ? stats.avgWaitMinutes + ' min' : '—' },
       ];
       document.getElementById('salesGrid').innerHTML = boxes.map(b => `
         <div class="stat-box">
