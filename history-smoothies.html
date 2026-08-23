@@ -48,21 +48,20 @@
             ${items.map(i => `<li>${i.qty}× ${i.name}${i.options ? ` <span class="order-tag">${i.options}</span>` : ''}</li>`).join('')}
           </ul>
           <div class="history-meta">${time} · $${o.total} · ${o.paymentMethod === 'cash' ? 'Cash' : 'Card'} · ${o.station === 'online' ? 'Online Order' : 'Station ' + o.station}</div>
-          ${o.status === 'completed' ? `<button class="undo-pickup-btn" data-order-id="${o.orderId}">Accidentally picked up? Undo</button>` : ''}
-          ${o.status === 'ready' ? `<button class="undo-ready-btn" data-order-id="${o.orderId}">Marked Ready too soon? Send back to in progress</button>` : ''}
+          ${o.smoothieStarted ? `<button class="undo-pickup-btn" data-order-id="${o.orderId}">Accidentally picked up? Undo</button>` : ''}
         </div>
       `;
     }
 
     async function handleUndoPickup(orderId, btn) {
-      if (!confirm(`Move order ${orderId} back to Ready on the Pickup screen?`)) return;
+      if (!confirm(`Send this smoothie order back to the Smoothies screen?`)) return;
       btn.disabled = true;
       btn.textContent = 'Undoing...';
       try {
-        const result = await undoPickup(orderId);
+        const result = await undoSmoothiePickup(orderId);
         if (!result.success) throw new Error(result.error || 'Could not undo pickup');
         const order = allOrders.find(o => o.orderId === orderId);
-        if (order) order.status = 'ready';
+        if (order) order.smoothieStarted = false;
         render();
       } catch (err) {
         alert('Could not undo pickup — ' + err.message);
@@ -71,28 +70,9 @@
       }
     }
 
-    async function handleUndoReady(orderId, btn) {
-      if (!confirm(`Send order ${orderId} back to in progress on the Assembly screen?`)) return;
-      btn.disabled = true;
-      btn.textContent = 'Sending back...';
-      try {
-        const result = await undoReady(orderId);
-        if (!result.success) throw new Error(result.error || 'Could not undo ready');
-        const order = allOrders.find(o => o.orderId === orderId);
-        if (order) order.status = 'in_progress';
-        render();
-      } catch (err) {
-        alert('Could not send that order back — ' + err.message);
-        btn.disabled = false;
-        btn.textContent = 'Marked Ready too soon? Send back to in progress';
-      }
-    }
-
     document.getElementById('historyList').addEventListener('click', (e) => {
       const undoPickupBtn = e.target.closest('.undo-pickup-btn');
       if (undoPickupBtn) { handleUndoPickup(undoPickupBtn.dataset.orderId, undoPickupBtn); return; }
-      const undoReadyBtn = e.target.closest('.undo-ready-btn');
-      if (undoReadyBtn) { handleUndoReady(undoReadyBtn.dataset.orderId, undoReadyBtn); return; }
     });
 
     function render() {
